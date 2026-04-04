@@ -267,9 +267,16 @@ export function createAdminRouter(deps: {
 
   // ─── MCP Connections ───────────────────────────────
 
-  /** GET /api/mcp-connections — A-API-11 */
-  router.get('/api/mcp-connections', (_req: Request, res: Response) => {
-    res.json(store.getMcpConnections());
+  /** GET /api/mcp-connections — A-API-11, A-MCP-UI-01 */
+  router.get('/api/mcp-connections', async (_req: Request, res: Response) => {
+    const connections = store.getMcpConnections();
+    const withCounts = await Promise.all(
+      connections.map(async (conn) => ({
+        ...conn,
+        toolCount: hub ? await hub.getToolCountForProxy(conn.id) : 0,
+      }))
+    );
+    res.json(withCounts);
   });
 
   /** POST /api/mcp-connections — A-API-12 */

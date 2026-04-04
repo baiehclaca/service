@@ -12,6 +12,7 @@ export interface McpItem {
   status: string;
   created_at: string;
   updated_at: string;
+  toolCount?: number;
 }
 
 interface McpListProps {
@@ -276,6 +277,9 @@ export function McpList({
                   <Text dimColor>({truncate(mcp.command, 30)})</Text>
                   {' — '}
                   <Text color={badge.color}>{mcp.status}</Text>
+                  {mcp.toolCount != null && mcp.toolCount > 0 ? (
+                    <Text dimColor>{' • '}{mcp.toolCount} tools</Text>
+                  ) : null}
                 </Text>
               </Box>
             );

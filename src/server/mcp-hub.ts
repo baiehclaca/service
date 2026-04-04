@@ -683,6 +683,18 @@ export class McpHub {
     return this.proxies;
   }
 
+  /** Get the tool count for a given MCP proxy by ID. Returns 0 if unavailable. */
+  async getToolCountForProxy(mcpId: string): Promise<number> {
+    try {
+      const proxy = this.proxies.get(mcpId);
+      if (!proxy || !proxy.available) return 0;
+      const tools = await proxy.listTools();
+      return tools.length;
+    } catch {
+      return 0;
+    }
+  }
+
   /** Gracefully shut down all transports and proxies */
   async shutdown(): Promise<void> {
     // Close all transports
