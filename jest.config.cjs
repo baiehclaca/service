@@ -2,7 +2,7 @@
 module.exports = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
@@ -15,7 +15,7 @@ module.exports = {
       },
     ],
   },
-  testMatch: ['**/src/__tests__/**/*.test.ts'],
+  testMatch: ['**/src/__tests__/**/*.test.ts', '**/src/__tests__/**/*.test.tsx'],
   forceExit: true,
   testTimeout: 15000,
 };

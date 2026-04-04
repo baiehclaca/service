@@ -437,7 +437,7 @@ program
   .command('dashboard')
   .description('Open the TUI dashboard')
   .action(async () => {
-    const { createDashboard } = await import('./dashboard.js');
+    const { createDashboard } = await import('./dashboard.js') as { createDashboard: () => void };
     createDashboard();
   });
 
