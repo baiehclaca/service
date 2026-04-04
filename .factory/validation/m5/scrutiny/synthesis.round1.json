@@ -1,7 +1,7 @@
 {
   "milestone": "m5",
-  "round": 2,
-  "status": "pass",
+  "round": 1,
+  "status": "fail",
   "validatorsRun": {
     "test": {
       "passed": true,
@@ -21,11 +21,19 @@
   },
   "reviewsSummary": {
     "total": 1,
-    "passed": 1,
-    "failed": 0,
-    "failedFeatures": []
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": [
+      "f-notification-center"
+    ]
   },
-  "blockingIssues": [],
+  "blockingIssues": [
+    {
+      "featureId": "f-notification-center",
+      "severity": "blocking",
+      "description": "Unread count is computed as apiUnread + sseUnread without deduplication/reconciliation, which can overcount and keep status-bar unread count incorrect after mark-all-read."
+    }
+  ],
   "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
@@ -37,10 +45,10 @@
     {
       "target": "skills",
       "suggestion": "Ensure referenced worker skill IDs exist and are available to workers before mission execution (or default unresolved skillName to a known valid worker profile).",
-      "evidence": "features.json assigns skillName=worker for implementation feature(s), but repository .factory/skills was empty and reviewer noted skill resolution failure.",
+      "evidence": "features.json assigns skillName=worker for implementation feature(s), but repository .factory/skills was empty and reviewer reported procedure drift due to missing skill.",
       "isSystemic": true
     }
   ],
   "rejectedObservations": [],
-  "previousRound": "/Users/teodorwaltervido/Desktop/service/.factory/validation/m5/scrutiny/synthesis.round1.json"
+  "previousRound": null
 }
