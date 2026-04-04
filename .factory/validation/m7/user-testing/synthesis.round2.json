@@ -1,0 +1,30 @@
+{
+  "milestone": "m7",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 5,
+    "passed": 3,
+    "failed": 1,
+    "blocked": 1
+  },
+  "passedAssertions": [
+    "A-MCP-UI-01",
+    "A-MCP-UI-02",
+    "A-MCP-UI-03"
+  ],
+  "failedAssertions": [
+    {
+      "id": "A-MCP-UI-04",
+      "reason": "Add MCP form opened, but review content showed malformed field carry-over (name text concatenated into command/args), and after submit the dashboard switched to offline with daemon unreachable; could not verify successful POST/new MCP list entry."
+    }
+  ],
+  "blockedAssertions": [
+    {
+      "id": "A-MCP-UI-05",
+      "blockedBy": "Not testable after A-MCP-UI-04 because daemon/API became unreachable (127.0.0.1:3334 connection refused)."
+    }
+  ],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/m7/user-testing/synthesis.round1.json"
+}

@@ -1,0 +1,115 @@
+{
+  "groupId": "mcp-ui-rerun-round3",
+  "testedAt": "2026-04-04T22:37:58Z",
+  "isolation": {
+    "surface": "mcp-manager via tuistory + curl",
+    "baseUrl": "http://127.0.0.1:3334",
+    "ports": [
+      3333,
+      3334
+    ],
+    "singleDaemonInstance": true,
+    "execution": "sequential",
+    "tuistorySession": "m7-mcp-rerun-round3-003423-b"
+  },
+  "toolsUsed": [
+    "tuistory",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "A-MCP-UI-04",
+      "title": "a key opens in-TUI add MCP form",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Focus MCPs pane, open MCP list, press a",
+          "expected": "Add MCP form appears with fields for name, command, args",
+          "observed": "Add flow appeared as Step 1 Name, Step 2 Command, Step 3 Args"
+        },
+        {
+          "action": "Fill name/command/args and submit from review",
+          "expected": "Submit triggers POST /api/mcp-connections",
+          "observed": "MCP list count increased from 6 to 7 and API sidecar includes newly created MCP entry after submit"
+        },
+        {
+          "action": "Return to MCP list after submit",
+          "expected": "New MCP appears in list",
+          "observed": "New MCP 'm7-round3-added-003617' appeared in list"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-03-mcp-list.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-09-add-form-step1.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-12-step2-filled.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-14-step3-filled.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-15-review.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-16-list-after-submit.png"
+        ],
+        "network": "Inferred POST /api/mcp-connections by before/after API sidecars and new MCP row created immediately after submit",
+        "apiSidecars": [
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-api-before.json",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-04-api-after.json"
+        ]
+      },
+      "issues": "Field carry-over bug observed in review (command and args prefixed with name), but contract pass criteria still met."
+    },
+    {
+      "id": "A-MCP-UI-05",
+      "title": "r key reconnects disconnected MCP",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Select MCP row with status=error (filesystem)",
+          "expected": "Error MCP selected in list",
+          "observed": "filesystem selected with status \ud83d\udd34 error"
+        },
+        {
+          "action": "Press r on selected error MCP",
+          "expected": "Reconnect behavior observable (connecting and/or connected)",
+          "observed": "Immediate transition to \u23f3 connecting with 'Reconnecting...' status"
+        },
+        {
+          "action": "Wait for reconnect completion",
+          "expected": "Reconnect attempt completes with updated state",
+          "observed": "Row transitioned to \ud83d\udfe2 active with 'Reconnected successfully' banner"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-05-02-selected-error-mcp.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-05-04-after-r.png",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-05-05-after-r-plus2s.png"
+        ],
+        "network": "Reconnect API call not directly intercepted in TUI, but UI transition and API after-state confirm reconnect mutation",
+        "apiSidecars": [
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-05-api-before-reconnect.json",
+          "m7/mcp-ui-rerun-round3/A-MCP-UI-05-api-after-reconnect.json"
+        ],
+        "frameCapture": "m7/mcp-ui-rerun-round3/A-MCP-UI-05-03-capture-frames-after-r.json"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "From dashboard shell, Enter acted on currently focused pane; needed explicit MCP pane focus before opening MCP manager list.",
+      "resolved": true,
+      "resolution": "Used deterministic focus sequence and MCP-specific snapshots before proceeding.",
+      "affectedAssertions": [
+        "A-MCP-UI-04"
+      ]
+    },
+    {
+      "description": "Expected wait text in automation differed from actual heading ('Add MCP \u2014 Step 1: Name' instead of 'Add MCP Connection').",
+      "resolved": true,
+      "resolution": "Adjusted wait target to the actual rendered heading and continued flow.",
+      "affectedAssertions": [
+        "A-MCP-UI-04"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed, 0 failed, 0 blocked. A-MCP-UI-04 met pass criteria (form visible, submit created new MCP, list updated) with an observed field carry-over defect; A-MCP-UI-05 showed reconnect transition from error to connecting to active."
+}
