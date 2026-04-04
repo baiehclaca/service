@@ -6,3 +6,5 @@ dist/
 ~/.service/
 *.db
 *.db-journal
+.factory/
+features.json
