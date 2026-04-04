@@ -12,7 +12,6 @@ export interface McpItem {
   status: string;
   created_at: string;
   updated_at: string;
-  toolsAdded?: number;
 }
 
 interface McpListProps {
@@ -267,9 +266,6 @@ export function McpList({
             const actualIndex = scrollOffset + i;
             const isSelected = actualIndex === selectedIndex;
             const badge = statusBadge(mcp.status);
-            const toolCount = mcp.toolsAdded !== undefined
-              ? `${mcp.toolsAdded} tools`
-              : null;
 
             return (
               <Box key={mcp.id}>
@@ -280,12 +276,6 @@ export function McpList({
                   <Text dimColor>({truncate(mcp.command, 30)})</Text>
                   {' — '}
                   <Text color={badge.color}>{mcp.status}</Text>
-                  {toolCount && (
-                    <>
-                      {' • '}
-                      <Text>{toolCount}</Text>
-                    </>
-                  )}
                 </Text>
               </Box>
             );

@@ -48,6 +48,8 @@ export function McpDetail({
   onBack,
 }: McpDetailProps): React.ReactElement {
   const [data, setData] = useState<McpDetailData>(mcpData);
+  // Track the current ID separately so it updates after a reconnect
+  const [currentId, setCurrentId] = useState<string>(mcpId);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -65,7 +67,7 @@ export function McpDetail({
       setData((prev) => ({ ...prev, status: 'connecting' }));
       setActionMessage('Reconnecting...');
 
-      const delResp = await fetch(`${BASE_URL}/api/mcp-connections/${mcpId}`, { method: 'DELETE' });
+      const delResp = await fetch(`${BASE_URL}/api/mcp-connections/${currentId}`, { method: 'DELETE' });
       if (!delResp.ok) {
         setActionMessage('Failed to reconnect');
         return;
@@ -78,7 +80,8 @@ export function McpDetail({
       });
 
       if (postResp.ok) {
-        const result = (await postResp.json()) as { id: string; name: string; toolsAdded: number };
+        const result = (await postResp.json()) as { id: string; name: string; toolsAdded?: number };
+        setCurrentId(result.id);
         setData((prev) => ({ ...prev, id: result.id, status: 'active', toolsAdded: result.toolsAdded }));
         setActionMessage('Reconnected successfully');
       } else {
@@ -89,12 +92,12 @@ export function McpDetail({
       setData((prev) => ({ ...prev, status: 'error' }));
       setActionMessage('Failed to reconnect');
     }
-  }, [mcpId, data.name, data.command, data.args]);
+  }, [currentId, data.name, data.command, data.args]);
 
   // Remove
   const removeMcp = useCallback(async () => {
     try {
-      const resp = await fetch(`${BASE_URL}/api/mcp-connections/${mcpId}`, { method: 'DELETE' });
+      const resp = await fetch(`${BASE_URL}/api/mcp-connections/${currentId}`, { method: 'DELETE' });
       if (!resp.ok) {
         setActionMessage('Failed to remove');
         return;
@@ -103,7 +106,7 @@ export function McpDetail({
     } catch {
       setActionMessage('Failed to remove');
     }
-  }, [mcpId, onBack]);
+  }, [currentId, onBack]);
 
   const handleConfirmRemove = useCallback(() => {
     removeMcp();

@@ -15,7 +15,6 @@ const mockMcps: McpItem[] = [
     status: 'active',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    toolsAdded: 14,
   },
   {
     id: 'mcp-2',
@@ -25,7 +24,6 @@ const mockMcps: McpItem[] = [
     status: 'error',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    toolsAdded: 8,
   },
   {
     id: 'mcp-3',
@@ -105,7 +103,7 @@ describe('McpList', () => {
     expect(frame).toContain('⏳');
   });
 
-  it('shows tool count when available', async () => {
+  it('does not show tool count (not returned by API)', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
@@ -117,8 +115,8 @@ describe('McpList', () => {
     await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('14 tools');
-    expect(frame).toContain('8 tools');
+    // GET /api/mcp-connections does not return toolsAdded, so no tool count is shown
+    expect(frame).not.toContain('tools');
   });
 
   it('shows command (truncated) in list', async () => {
