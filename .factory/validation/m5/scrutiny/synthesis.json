@@ -1,0 +1,54 @@
+{
+  "milestone": "m5",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/teodorwaltervido/Desktop/service && npm test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/teodorwaltervido/Desktop/service && npm run build",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "cd /Users/teodorwaltervido/Desktop/service && npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": [
+      "f-notification-center"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "f-notification-center",
+      "severity": "blocking",
+      "description": "Unread count is computed as apiUnread + sseUnread without deduplication/reconciliation, which can overcount and keep status-bar unread count incorrect after mark-all-read."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Clarify backend/API scope boundaries for TUI milestones: either enforce no backend changes or explicitly allow minimal API/store updates required to satisfy notification-center assertions.",
+      "evidence": "Mission AGENTS.md marks src/api/admin.ts and src/gateway/ as DO NOT TOUCH, but feature f-notification-center changed both files to implement required behavior.",
+      "isSystemic": false
+    },
+    {
+      "target": "skills",
+      "suggestion": "Ensure referenced worker skill IDs exist and are available to workers before mission execution (or default unresolved skillName to a known valid worker profile).",
+      "evidence": "features.json assigns skillName=worker for implementation feature(s), but repository .factory/skills was empty and reviewer reported procedure drift due to missing skill.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}

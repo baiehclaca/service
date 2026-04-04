@@ -1,0 +1,39 @@
+{
+  "featureId": "f-notification-center",
+  "reviewedAt": "2026-04-04T19:22:44Z",
+  "commitId": "092df07",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Feature implementation is substantial and mostly aligned with m5 scope, but there is a blocking correctness issue in unread-count handling for StatusBar under SSE + API overlap that can violate A-NOT-05 behavior.",
+    "issues": [
+      {
+        "file": "src/cli/app/App.tsx",
+        "line": 67,
+        "severity": "blocking",
+        "description": "Unread count is computed as `apiUnread + sseUnread` without deduplication by notification id, and SSE unread items are not reconciled when the same notifications are later returned by API or marked read. This can overcount unread notifications and prevent the status bar count from dropping to 0 after mark-all-read, violating expected behavior for A-NOT-05."
+      },
+      {
+        "file": "src/cli/app/screens/NotificationList.tsx",
+        "line": 51,
+        "severity": "non_blocking",
+        "description": "Search integration uses `/api/notifications/search?q=...` while the feature contract specifies search mode via `GET /api/notifications?search=query`. The implementation works with the newly added route, but it diverges from the stated API contract for this feature."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Mission AGENTS.md says backend/API layers are out of scope for this TUI mission, but this feature modified backend files.",
+      "evidence": "Mission AGENTS.md DO NOT TOUCH includes `src/api/admin.ts` and `src/gateway/`; commit 092df07 changes both `src/api/admin.ts` and `src/gateway/notification-store.ts`."
+    },
+    {
+      "area": "skills",
+      "observation": "Feature references skill `worker`, but that skill is not present in the repository skills directory, causing procedural drift and ad-hoc execution behavior.",
+      "evidence": "features.json for `f-notification-center` sets `skillName` to `worker`; repository `.factory/skills/` is empty; handoff skillFeedback notes 'Skill worker not found'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review result: fail. Blocking issue found in unread-count computation (SSE + API double counting) that can break m5 notification-center expected behavior, especially mark-all-read status updates."
+}
