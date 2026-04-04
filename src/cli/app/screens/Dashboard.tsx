@@ -15,6 +15,7 @@ interface DashboardProps {
   activePane: number;
   onNavigateToNotifications?: () => void;
   onNavigateToIntegrations?: () => void;
+  onNavigateToMcps?: () => void;
 }
 
 interface Notification {
@@ -51,7 +52,7 @@ interface StatusData {
  * Tab cycles panes; active pane has highlighted border.
  * Each pane shows summary data from API.
  */
-export function Dashboard({ activePane, onNavigateToNotifications, onNavigateToIntegrations }: DashboardProps): React.ReactElement {
+export function Dashboard({ activePane, onNavigateToNotifications, onNavigateToIntegrations, onNavigateToMcps }: DashboardProps): React.ReactElement {
   const { data: notifications } = useApi<Notification[]>('/api/notifications?limit=10', 5000);
   const { data: integrations } = useApi<Integration[]>('/api/integrations', 10000);
   const { data: mcps } = useApi<McpConnection[]>('/api/mcp-connections', 10000);
@@ -66,6 +67,9 @@ export function Dashboard({ activePane, onNavigateToNotifications, onNavigateToI
       }
       if (pane === 'Integrations' && onNavigateToIntegrations) {
         onNavigateToIntegrations();
+      }
+      if (pane === 'MCPs' && onNavigateToMcps) {
+        onNavigateToMcps();
       }
     }
   });

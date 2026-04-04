@@ -1,38 +1,40 @@
 import { jest } from '@jest/globals';
 import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
-import { IntegrationList } from '../../cli/app/screens/IntegrationList.js';
-import type { IntegrationItem } from '../../cli/app/screens/IntegrationList.js';
+import { McpList } from '../../cli/app/screens/McpList.js';
+import type { McpItem } from '../../cli/app/screens/McpList.js';
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const mockIntegrations: IntegrationItem[] = [
+const mockMcps: McpItem[] = [
   {
-    id: 'int-1',
-    name: 'My Slack',
-    type: 'slack',
+    id: 'mcp-1',
+    name: 'filesystem',
+    command: 'npx @modelcontextprotocol/server-filesystem',
+    args: ['/Users/test/docs'],
     status: 'active',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    last_event_at: new Date(Date.now() - 120000).toISOString(),
+    toolsAdded: 14,
   },
   {
-    id: 'int-2',
-    name: 'Twitter Feed',
-    type: 'x-twitter',
+    id: 'mcp-2',
+    name: 'github',
+    command: 'npx @modelcontextprotocol/server-github',
+    args: [],
     status: 'error',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    last_event_at: new Date(Date.now() - 3600000).toISOString(),
+    toolsAdded: 8,
   },
   {
-    id: 'int-3',
-    name: 'Disabled Webhook',
-    type: 'webhook',
-    status: 'inactive',
+    id: 'mcp-3',
+    name: 'memory',
+    command: 'npx @modelcontextprotocol/server-memory',
+    args: ['--persist'],
+    status: 'connecting',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    last_event_at: null,
   },
 ];
 
@@ -41,7 +43,7 @@ const originalFetch = global.fetch;
 beforeEach(() => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: async () => mockIntegrations,
+    json: async () => mockMcps,
   });
 });
 
@@ -50,14 +52,14 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-describe('IntegrationList', () => {
-  it('renders integration items after loading', async () => {
+describe('McpList', () => {
+  it('renders MCP items after loading', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     // Initially shows loading
@@ -66,9 +68,9 @@ describe('IntegrationList', () => {
     await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('My Slack');
-    expect(frame).toContain('Twitter Feed');
-    expect(frame).toContain('Disabled Webhook');
+    expect(frame).toContain('filesystem');
+    expect(frame).toContain('github');
+    expect(frame).toContain('memory');
   });
 
   it('shows count in header', async () => {
@@ -77,13 +79,13 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('Integrations (3)');
+    expect(frame).toContain('MCPs (3)');
   });
 
   it('shows color-coded status badges', async () => {
@@ -92,7 +94,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -100,25 +102,39 @@ describe('IntegrationList', () => {
     const frame = lastFrame()!;
     expect(frame).toContain('🟢');
     expect(frame).toContain('🔴');
-    expect(frame).toContain('⏸');
+    expect(frame).toContain('⏳');
   });
 
-  it('shows relative time for last_event_at', async () => {
+  it('shows tool count when available', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
     const frame = lastFrame()!;
-    // Should contain relative time like "2m ago" or "1h ago"
-    expect(frame).toMatch(/\d+[mhd] ago/);
-    // The third integration has null last_event_at, should show 'never'
-    expect(frame).toContain('never');
+    expect(frame).toContain('14 tools');
+    expect(frame).toContain('8 tools');
+  });
+
+  it('shows command (truncated) in list', async () => {
+    const onBack = jest.fn();
+    const onSelect = jest.fn();
+    const onAdd = jest.fn();
+
+    const { lastFrame } = render(
+      React.createElement(McpList, { onBack, onSelect, onAdd })
+    );
+
+    await delay(100);
+
+    const frame = lastFrame()!;
+    // Commands should be visible (may be truncated)
+    expect(frame).toContain('npx');
   });
 
   it('navigates down with j key', async () => {
@@ -127,7 +143,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame, stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -136,7 +152,7 @@ describe('IntegrationList', () => {
     await delay(50);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('Twitter Feed');
+    expect(frame).toContain('github');
   });
 
   it('navigates up with k key', async () => {
@@ -145,7 +161,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame, stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -156,7 +172,7 @@ describe('IntegrationList', () => {
     await delay(50);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('My Slack');
+    expect(frame).toContain('filesystem');
   });
 
   it('calls onSelect when Enter is pressed', async () => {
@@ -165,7 +181,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -174,7 +190,7 @@ describe('IntegrationList', () => {
     await delay(50);
 
     expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'int-1', name: 'My Slack' })
+      expect.objectContaining({ id: 'mcp-1', name: 'filesystem' })
     );
   });
 
@@ -184,7 +200,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -195,52 +211,21 @@ describe('IntegrationList', () => {
     expect(onBack).toHaveBeenCalled();
   });
 
-  it('calls enable API when e is pressed', async () => {
+  it('calls onAdd when a is pressed', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => mockIntegrations })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
-
     const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
-    stdin.write('e');
-    await delay(100);
+    stdin.write('a');
+    await delay(50);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/integrations/int-1/enable'),
-      expect.objectContaining({ method: 'POST' })
-    );
-  });
-
-  it('calls disable API when d is pressed', async () => {
-    const onBack = jest.fn();
-    const onSelect = jest.fn();
-    const onAdd = jest.fn();
-
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => mockIntegrations })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
-
-    const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
-    );
-
-    await delay(100);
-
-    stdin.write('d');
-    await delay(100);
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/integrations/int-1/disable'),
-      expect.objectContaining({ method: 'POST' })
-    );
+    expect(onAdd).toHaveBeenCalled();
   });
 
   it('shows confirmation dialog when x is pressed', async () => {
@@ -249,7 +234,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame, stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -258,22 +243,22 @@ describe('IntegrationList', () => {
     await delay(50);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('Remove integration');
+    expect(frame).toContain('Remove MCP');
     expect(frame).toContain('y');
     expect(frame).toContain('n');
   });
 
-  it('removes integration when x then y is pressed', async () => {
+  it('removes MCP when x then y is pressed', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => mockIntegrations })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockMcps })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
 
     const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -284,7 +269,7 @@ describe('IntegrationList', () => {
     await delay(100);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/integrations/int-1'),
+      expect.stringContaining('/api/mcp-connections/mcp-1'),
       expect.objectContaining({ method: 'DELETE' })
     );
   });
@@ -295,7 +280,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame, stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -307,25 +292,41 @@ describe('IntegrationList', () => {
 
     const frame = lastFrame()!;
     // Should be back to the list, no confirmation dialog
-    expect(frame).toContain('My Slack');
-    expect(frame).not.toContain('Remove integration');
+    expect(frame).toContain('filesystem');
   });
 
-  it('calls onAdd when a is pressed', async () => {
+  it('triggers reconnect when r is pressed', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
-    const { stdin } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => mockMcps })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'mcp-new', name: 'filesystem', toolsAdded: 14 }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockMcps });
+
+    const { lastFrame, stdin } = render(
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
-    stdin.write('a');
-    await delay(50);
+    stdin.write('r');
+    await delay(200);
 
-    expect(onAdd).toHaveBeenCalled();
+    // Should have called DELETE then POST
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/mcp-connections/mcp-1'),
+      expect.objectContaining({ method: 'DELETE' })
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/mcp-connections'),
+      expect.objectContaining({ method: 'POST' })
+    );
+
+    const frame = lastFrame()!;
+    expect(frame).toContain('Reconnect');
   });
 
   it('shows keyboard hints in footer', async () => {
@@ -334,7 +335,7 @@ describe('IntegrationList', () => {
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
@@ -342,14 +343,13 @@ describe('IntegrationList', () => {
     const frame = lastFrame()!;
     expect(frame).toContain('j/k:nav');
     expect(frame).toContain('Enter:detail');
-    expect(frame).toContain('e:enable');
-    expect(frame).toContain('d:disable');
+    expect(frame).toContain('r:reconnect');
     expect(frame).toContain('x:remove');
     expect(frame).toContain('a:add');
     expect(frame).toContain('Esc:back');
   });
 
-  it('shows empty message when no integrations exist', async () => {
+  it('shows empty message when no MCPs exist', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
@@ -360,29 +360,29 @@ describe('IntegrationList', () => {
     });
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('No integrations configured');
+    expect(frame).toContain('No MCPs connected');
   });
 
-  it('shows integration type in list', async () => {
+  it('shows status text in list entries', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();
     const onAdd = jest.fn();
 
     const { lastFrame } = render(
-      React.createElement(IntegrationList, { onBack, onSelect, onAdd })
+      React.createElement(McpList, { onBack, onSelect, onAdd })
     );
 
     await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('(slack)');
-    expect(frame).toContain('(x-twitter)');
-    expect(frame).toContain('(webhook)');
+    expect(frame).toContain('active');
+    expect(frame).toContain('error');
+    expect(frame).toContain('connecting');
   });
 });

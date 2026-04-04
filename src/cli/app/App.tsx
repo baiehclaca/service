@@ -10,11 +10,15 @@ import { NotificationDetail } from './screens/NotificationDetail.js';
 import { IntegrationList } from './screens/IntegrationList.js';
 import { IntegrationDetail } from './screens/IntegrationDetail.js';
 import { IntegrationAdd } from './screens/IntegrationAdd.js';
+import { McpList } from './screens/McpList.js';
+import { McpDetail } from './screens/McpDetail.js';
+import { McpAdd } from './screens/McpAdd.js';
 import { useApi } from './hooks/useApi.js';
 import { useSse } from './hooks/useSse.js';
 import type { NotificationItem } from './screens/NotificationList.js';
 import type { NotificationDetailItem } from './screens/NotificationDetail.js';
 import type { IntegrationItem } from './screens/IntegrationList.js';
+import type { McpItem } from './screens/McpList.js';
 
 type Screen =
   | 'dashboard'
@@ -23,7 +27,10 @@ type Screen =
   | 'notification-detail'
   | 'integrations'
   | 'integration-detail'
-  | 'integration-add';
+  | 'integration-add'
+  | 'mcps'
+  | 'mcp-detail'
+  | 'mcp-add';
 
 interface StatusData {
   version: string;
@@ -45,6 +52,7 @@ export function App(): React.ReactElement {
   const [helpVisible, setHelpVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<NotificationDetailItem | null>(null);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationItem | null>(null);
+  const [selectedMcp, setSelectedMcp] = useState<McpItem | null>(null);
 
   // Check daemon health
   const { data: statusData, error: statusError } = useApi<StatusData>('/api/status', 5000);
@@ -165,6 +173,35 @@ export function App(): React.ReactElement {
     setScreen('integrations');
   }, []);
 
+  // Navigate to MCP list from dashboard
+  const handleNavigateToMcps = useCallback(() => {
+    setScreen('mcps');
+  }, []);
+
+  // Navigate to MCP detail
+  const handleSelectMcp = useCallback((mcp: McpItem) => {
+    setSelectedMcp(mcp);
+    setScreen('mcp-detail');
+  }, []);
+
+  // Navigate to MCP add form
+  const handleNavigateToMcpAdd = useCallback(() => {
+    setScreen('mcp-add');
+  }, []);
+
+  // Back from MCP screens
+  const handleBackFromMcps = useCallback(() => {
+    setScreen('dashboard');
+  }, []);
+
+  const handleBackFromMcpDetail = useCallback(() => {
+    setScreen('mcps');
+  }, []);
+
+  const handleBackFromMcpAdd = useCallback(() => {
+    setScreen('mcps');
+  }, []);
+
   // Keyboard handling — only active on dashboard / help screens
   useInput((input, key) => {
     // Help overlay toggle (works from any screen)
@@ -282,6 +319,30 @@ export function App(): React.ReactElement {
             onBack={handleBackFromIntegrationAdd}
           />
         );
+      case 'mcps':
+        return (
+          <McpList
+            onBack={handleBackFromMcps}
+            onSelect={handleSelectMcp}
+            onAdd={handleNavigateToMcpAdd}
+          />
+        );
+      case 'mcp-detail':
+        return selectedMcp ? (
+          <McpDetail
+            mcpId={selectedMcp.id}
+            mcpData={selectedMcp}
+            onBack={handleBackFromMcpDetail}
+          />
+        ) : (
+          <DaemonOffline />
+        );
+      case 'mcp-add':
+        return (
+          <McpAdd
+            onBack={handleBackFromMcpAdd}
+          />
+        );
       case 'dashboard':
       default:
         return (
@@ -289,6 +350,7 @@ export function App(): React.ReactElement {
             activePane={activePane}
             onNavigateToNotifications={handleNavigateToNotifications}
             onNavigateToIntegrations={handleNavigateToIntegrations}
+            onNavigateToMcps={handleNavigateToMcps}
           />
         );
     }
