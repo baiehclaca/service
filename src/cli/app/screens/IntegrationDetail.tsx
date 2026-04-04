@@ -97,7 +97,11 @@ export function IntegrationDetail({
   // Enable
   const enableIntegration = useCallback(async () => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${integrationId}/enable`, { method: 'POST' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${integrationId}/enable`, { method: 'POST' });
+      if (!resp.ok) {
+        setActionMessage('Failed to enable');
+        return;
+      }
       setData((prev) => prev ? { ...prev, status: 'active' } : prev);
       setActionMessage('Integration enabled');
     } catch {
@@ -108,7 +112,11 @@ export function IntegrationDetail({
   // Disable
   const disableIntegration = useCallback(async () => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${integrationId}/disable`, { method: 'POST' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${integrationId}/disable`, { method: 'POST' });
+      if (!resp.ok) {
+        setActionMessage('Failed to disable');
+        return;
+      }
       setData((prev) => prev ? { ...prev, status: 'inactive' } : prev);
       setActionMessage('Integration disabled');
     } catch {
@@ -119,7 +127,11 @@ export function IntegrationDetail({
   // Remove
   const removeIntegration = useCallback(async () => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${integrationId}`, { method: 'DELETE' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${integrationId}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        setActionMessage('Failed to remove');
+        return;
+      }
       onBack();
     } catch {
       setActionMessage('Failed to remove');

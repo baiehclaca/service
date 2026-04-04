@@ -105,7 +105,11 @@ export function IntegrationList({
   // Enable an integration
   const enableIntegration = useCallback(async (id: string) => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${id}/enable`, { method: 'POST' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${id}/enable`, { method: 'POST' });
+      if (!resp.ok) {
+        setActionMessage('Failed to enable integration');
+        return;
+      }
       setIntegrations((prev) =>
         prev.map((i) => (i.id === id ? { ...i, status: 'active' } : i))
       );
@@ -118,7 +122,11 @@ export function IntegrationList({
   // Disable an integration
   const disableIntegration = useCallback(async (id: string) => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${id}/disable`, { method: 'POST' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${id}/disable`, { method: 'POST' });
+      if (!resp.ok) {
+        setActionMessage('Failed to disable integration');
+        return;
+      }
       setIntegrations((prev) =>
         prev.map((i) => (i.id === id ? { ...i, status: 'inactive' } : i))
       );
@@ -131,7 +139,11 @@ export function IntegrationList({
   // Remove an integration
   const removeIntegration = useCallback(async (id: string) => {
     try {
-      await fetch(`${BASE_URL}/api/integrations/${id}`, { method: 'DELETE' });
+      const resp = await fetch(`${BASE_URL}/api/integrations/${id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        setActionMessage('Failed to remove integration');
+        return;
+      }
       setIntegrations((prev) => prev.filter((i) => i.id !== id));
       setActionMessage('Integration removed');
     } catch {
