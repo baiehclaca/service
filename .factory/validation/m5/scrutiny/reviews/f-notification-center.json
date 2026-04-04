@@ -1,26 +1,38 @@
 {
   "featureId": "f-notification-center",
-  "reviewedAt": "2026-04-04T19:30:24Z",
-  "commitId": "a743a0ab2c99b3ab9d37512d19b90e28741c6424",
+  "reviewedAt": "2026-04-04T20:04:50Z",
+  "commitId": "0463955842d239aa3af0673034d7728d545b084f",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "pass",
   "codeReview": {
-    "summary": "Fix commit adequately addresses the prior blocking unread-count defect by deduplicating unread notifications by ID and reconciling SSE items against API IDs; search endpoint usage is now aligned with feature contract (`/api/notifications?search=`). No new blocking correctness issues were found in the reviewed diff.",
-    "issues": []
+    "summary": "Notification Center behavior is functionally complete across list/detail, SSE merge, mark-as-read, unread filter toggle, and API wiring, including follow-up fixes in commits a743a0a and 0463955. No blocking correctness issues were found.",
+    "issues": [
+      {
+        "file": "src/cli/app/screens/NotificationList.tsx",
+        "line": 116,
+        "severity": "non_blocking",
+        "description": "Search results are re-filtered client-side using simple substring matching after server FTS5 search results are fetched. This can drop valid FTS5 matches (e.g., wildcard/operator queries like `meet*`) that do not literally contain the raw query string."
+      }
+    ]
   },
   "sharedStateObservations": [
     {
       "area": "conventions",
-      "observation": "Mission-level AGENTS guidance says backend/API files are out of scope for this TUI mission, but this feature/fix required backend edits to satisfy Notification Center behavior and search contract.",
-      "evidence": "Mission AGENTS.md lists `src/api/admin.ts` and `src/gateway/` under DO NOT TOUCH; reviewed commits for f-notification-center (including a743a0a) modify `src/api/admin.ts` and earlier implementation modified `src/gateway/notification-store.ts`."
+      "observation": "Mission AGENTS guidance states backend/API should remain unchanged, but this feature required backend edits to satisfy search and mark-all-read behavior.",
+      "evidence": "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/AGENTS.md:8,136-141; commits 092df07 and a743a0a modify src/api/admin.ts and src/gateway/notification-store.ts"
     },
     {
       "area": "skills",
-      "observation": "Feature references skill `worker`, but no corresponding skill file exists in repository skills, causing procedural drift noted by worker.",
-      "evidence": "features.json for `f-notification-center` sets `skillName` to `worker`; `/Users/teodorwaltervido/Desktop/service/.factory/skills` is empty; handoff `skillFeedback` records `Skill worker not found`."
+      "observation": "Feature references `skillName: worker`, but no worker skill exists in project skills, causing workflow drift in transcript.",
+      "evidence": "features.json includes `\"skillName\": \"worker\"` for f-notification-center; /Users/teodorwaltervido/Desktop/service/.factory/skills is empty; worker handoff skillFeedback notes 'Skill worker not found'."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Expected shared architecture reference file is missing from project library, reducing reviewer guidance on component-boundary checks.",
+      "evidence": "/Users/teodorwaltervido/Desktop/service/.factory/library contains only user-testing.md; architecture.md not present."
     }
   ],
-  "addressesFailureFrom": "/Users/teodorwaltervido/Desktop/service/.factory/validation/m5/scrutiny/reviews/f-notification-center.json",
-  "summary": "Pass. The fix resolves the prior blocking overcount/reconciliation issue in unread-count computation and aligns search endpoint usage. No blocking issues remain in this fix review."
+  "addressesFailureFrom": null,
+  "summary": "Pass. The feature meets expected Notification Center behavior across list/detail, SSE updates, mark-read/mark-all-read, and unread/search flows after follow-up fixes. One non-blocking search semantics issue remains in client-side post-filtering of server FTS results."
 }

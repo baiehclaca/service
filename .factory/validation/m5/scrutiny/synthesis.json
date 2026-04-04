@@ -1,6 +1,6 @@
 {
   "milestone": "m5",
-  "round": 2,
+  "round": 3,
   "status": "pass",
   "validatorsRun": {
     "test": {
@@ -41,6 +41,11 @@
       "isSystemic": true
     }
   ],
-  "rejectedObservations": [],
-  "previousRound": "/Users/teodorwaltervido/Desktop/service/.factory/validation/m5/scrutiny/synthesis.round1.json"
+  "rejectedObservations": [
+    {
+      "observation": "Expected shared architecture reference file is missing from project library.",
+      "reason": "ambiguous"
+    }
+  ],
+  "previousRound": "/Users/teodorwaltervido/Desktop/service/.factory/validation/m5/scrutiny/synthesis.round2.json"
 }
