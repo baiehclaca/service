@@ -112,12 +112,24 @@ export function NotificationList({
     }
   }, []);
 
-  // Keep selection in bounds
+  // Compute displayed list (apply filters client-side before rendering)
+  const displayedNotifications = searchQuery
+    ? notifications.filter(
+        (n) =>
+          n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          n.body.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          n.source.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : unreadOnly
+      ? notifications.filter((n) => !n.read)
+      : notifications;
+
+  // Keep selection in bounds against the filtered list
   useEffect(() => {
-    if (selectedIndex >= notifications.length && notifications.length > 0) {
-      setSelectedIndex(notifications.length - 1);
+    if (selectedIndex >= displayedNotifications.length && displayedNotifications.length > 0) {
+      setSelectedIndex(displayedNotifications.length - 1);
     }
-  }, [notifications, selectedIndex]);
+  }, [displayedNotifications.length, selectedIndex]);
 
   // Adjust scroll offset to keep selection visible
   useEffect(() => {
@@ -135,6 +147,8 @@ export function NotificationList({
         setSearchMode(false);
         setSearchInput('');
         setSearchQuery('');
+        setSelectedIndex(0);
+        setScrollOffset(0);
         return;
       }
       if (key.return) {
@@ -175,13 +189,13 @@ export function NotificationList({
 
     // Navigate down
     if (key.downArrow || input === 'j') {
-      setSelectedIndex((i) => Math.min(notifications.length - 1, i + 1));
+      setSelectedIndex((i) => Math.min(displayedNotifications.length - 1, i + 1));
       return;
     }
 
     // Enter = open detail
     if (key.return) {
-      const selected = notifications[selectedIndex];
+      const selected = displayedNotifications[selectedIndex];
       if (selected) {
         onSelect(selected);
       }
@@ -190,7 +204,7 @@ export function NotificationList({
 
     // Space = mark selected as read
     if (input === ' ') {
-      const selected = notifications[selectedIndex];
+      const selected = displayedNotifications[selectedIndex];
       if (selected && !selected.read) {
         markAsRead(selected.id);
       }
@@ -221,7 +235,7 @@ export function NotificationList({
   });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-  const visibleNotifications = notifications.slice(scrollOffset, scrollOffset + visibleCount);
+  const visibleNotifications = displayedNotifications.slice(scrollOffset, scrollOffset + visibleCount);
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -253,7 +267,7 @@ export function NotificationList({
       <Box flexDirection="column" flexGrow={1} overflowY="hidden" paddingX={1}>
         {loading ? (
           <Text dimColor>Loading notifications...</Text>
-        ) : notifications.length === 0 ? (
+        ) : displayedNotifications.length === 0 ? (
           <Text dimColor>No notifications.</Text>
         ) : (
           visibleNotifications.map((n, i) => {
