@@ -7,12 +7,23 @@ import { DaemonOffline } from './screens/DaemonOffline.js';
 import { Dashboard } from './screens/Dashboard.js';
 import { NotificationList } from './screens/NotificationList.js';
 import { NotificationDetail } from './screens/NotificationDetail.js';
+import { IntegrationList } from './screens/IntegrationList.js';
+import { IntegrationDetail } from './screens/IntegrationDetail.js';
+import { IntegrationAdd } from './screens/IntegrationAdd.js';
 import { useApi } from './hooks/useApi.js';
 import { useSse } from './hooks/useSse.js';
 import type { NotificationItem } from './screens/NotificationList.js';
 import type { NotificationDetailItem } from './screens/NotificationDetail.js';
+import type { IntegrationItem } from './screens/IntegrationList.js';
 
-type Screen = 'dashboard' | 'offline' | 'notifications' | 'notification-detail';
+type Screen =
+  | 'dashboard'
+  | 'offline'
+  | 'notifications'
+  | 'notification-detail'
+  | 'integrations'
+  | 'integration-detail'
+  | 'integration-add';
 
 interface StatusData {
   version: string;
@@ -33,6 +44,7 @@ export function App(): React.ReactElement {
   const [activePane, setActivePane] = useState(0);
   const [helpVisible, setHelpVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<NotificationDetailItem | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationItem | null>(null);
 
   // Check daemon health
   const { data: statusData, error: statusError } = useApi<StatusData>('/api/status', 5000);
@@ -122,6 +134,35 @@ export function App(): React.ReactElement {
   // Back from notification list to dashboard
   const handleBackFromList = useCallback(() => {
     setScreen('dashboard');
+  }, []);
+
+  // Navigate to integration list from dashboard
+  const handleNavigateToIntegrations = useCallback(() => {
+    setScreen('integrations');
+  }, []);
+
+  // Navigate to integration detail
+  const handleSelectIntegration = useCallback((integration: IntegrationItem) => {
+    setSelectedIntegration(integration);
+    setScreen('integration-detail');
+  }, []);
+
+  // Navigate to integration add form
+  const handleNavigateToIntegrationAdd = useCallback(() => {
+    setScreen('integration-add');
+  }, []);
+
+  // Back from integration screens
+  const handleBackFromIntegrations = useCallback(() => {
+    setScreen('dashboard');
+  }, []);
+
+  const handleBackFromIntegrationDetail = useCallback(() => {
+    setScreen('integrations');
+  }, []);
+
+  const handleBackFromIntegrationAdd = useCallback(() => {
+    setScreen('integrations');
   }, []);
 
   // Keyboard handling — only active on dashboard / help screens
@@ -218,12 +259,36 @@ export function App(): React.ReactElement {
         ) : (
           <DaemonOffline />
         );
+      case 'integrations':
+        return (
+          <IntegrationList
+            onBack={handleBackFromIntegrations}
+            onSelect={handleSelectIntegration}
+            onAdd={handleNavigateToIntegrationAdd}
+          />
+        );
+      case 'integration-detail':
+        return selectedIntegration ? (
+          <IntegrationDetail
+            integrationId={selectedIntegration.id}
+            onBack={handleBackFromIntegrationDetail}
+          />
+        ) : (
+          <DaemonOffline />
+        );
+      case 'integration-add':
+        return (
+          <IntegrationAdd
+            onBack={handleBackFromIntegrationAdd}
+          />
+        );
       case 'dashboard':
       default:
         return (
           <Dashboard
             activePane={activePane}
             onNavigateToNotifications={handleNavigateToNotifications}
+            onNavigateToIntegrations={handleNavigateToIntegrations}
           />
         );
     }

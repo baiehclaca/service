@@ -141,6 +141,19 @@ export function createAdminRouter(deps: {
     res.json(integrations);
   });
 
+  /** GET /api/integrations/:id — single integration with config */
+  router.get('/api/integrations/:id', (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const allIntegrations = store.getAllIntegrations();
+    const integration = allIntegrations.find(i => i.id === id);
+    if (!integration) {
+      res.status(404).json({ error: 'Integration not found' });
+      return;
+    }
+    const config = store.loadIntegrationConfig(id) ?? {};
+    res.json({ ...integration, config });
+  });
+
   /** POST /api/integrations — A-API-08 */
   router.post('/api/integrations', async (req: Request, res: Response) => {
     const { type, name, config } = req.body as {
