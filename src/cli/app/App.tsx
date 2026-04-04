@@ -89,6 +89,38 @@ export function App(): React.ReactElement {
     }
   });
 
+  // Fallback raw stdin listener for PTY/non-interactive contexts where
+  // Ink's useInput may not fire reliably (e.g. tuistory, piped terminals).
+  useEffect(() => {
+    const handleStdin = (data: Buffer) => {
+      const key = data.toString();
+      // q, Q, ctrl+c, ctrl+q all quit
+      if (key === 'q' || key === 'Q' || key === '\u0003' || key === '\u0011') {
+        exit();
+      }
+    };
+
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+    }
+    process.stdin.resume();
+    process.stdin.on('data', handleStdin);
+
+    return () => {
+      process.stdin.off('data', handleStdin);
+      process.stdin.pause();
+    };
+  }, [exit]);
+
+  // SIGINT handler for clean exit in all contexts
+  useEffect(() => {
+    const handleSigint = () => process.exit(0);
+    process.on('SIGINT', handleSigint);
+    return () => {
+      process.off('SIGINT', handleSigint);
+    };
+  }, []);
+
   const version = statusData?.version ?? '1.0.1';
   const daemonOnline = screen === 'dashboard' && !statusError;
   const unreadCount = notifData ? notifData.filter((n) => !n.read).length : 0;
