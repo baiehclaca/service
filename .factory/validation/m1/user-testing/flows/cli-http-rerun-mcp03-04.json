@@ -1,0 +1,39 @@
+{
+  "milestone": "m1",
+  "surface": "cli-http",
+  "groupId": "cli-http-rerun-mcp03-04",
+  "status": "pass",
+  "assertions": {
+    "A-MCP-03": {
+      "status": "pass",
+      "reason": "After runtime MCP registration, namespaced downstream tool appears in tools/list for active MCP session.",
+      "evidence": [
+        "POST /mcp initialize (capture mcp-session-id)",
+        "POST /api/mcp-connections (mock-rerun)",
+        "POST /mcp tools/list includes <mcpId>__echo"
+      ]
+    },
+    "A-MCP-04": {
+      "status": "pass",
+      "reason": "tools/call for namespaced downstream tool proxied and returned downstream payload.",
+      "evidence": [
+        "POST /mcp tools/call <mcpId>__echo with text=hello-rerun"
+      ]
+    }
+  },
+  "passedAssertions": [
+    "A-MCP-03",
+    "A-MCP-04"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "toolsUsed": [
+    "Execute",
+    "curl",
+    "node",
+    "python3"
+  ],
+  "frictions": [],
+  "blockers": [],
+  "evidenceDir": "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m1/cli-http-rerun-mcp03-04"
+}

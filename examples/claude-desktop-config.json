@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "service": {
+      "url": "http://localhost:3333/mcp",
+      "_note": "SERVICE MCP Hub — uses Streamable HTTP transport. Start the daemon first: node ~/Desktop/service/dist/main.js (or 'service start' if installed globally)."
+    }
+  }
+}

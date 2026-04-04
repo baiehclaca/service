@@ -1,0 +1,50 @@
+{
+  "milestone": "m2",
+  "round": 3,
+  "status": "pass",
+  "validatorsRun": {
+    "build": {
+      "passed": true,
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    "test": {
+      "passed": true,
+      "command": "npm test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npx tsc --noEmit -p /Users/teodorwaltervido/Desktop/service/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Ensure mission feature skillName values only reference installed skills and require mission transcript indexing/handoff artifacts to include each completed worker session for reviewer evidence access.",
+      "evidence": "Review f-fix-m2-scrutiny-2 reported skillName \"worker\" with empty project .factory/skills and missing mission-local transcript/handoff index for session 65cb0061-aeaa-48ce-8229-50c3080af97f.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Missing service-level updates from sharedStateObservations",
+      "reason": "ambiguous"
+    }
+  ],
+  "previousRound": ".factory/validation/m2/scrutiny/synthesis.round2.json"
+}

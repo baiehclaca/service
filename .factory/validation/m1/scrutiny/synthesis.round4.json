@@ -1,0 +1,84 @@
+{
+  "milestone": "m1",
+  "round": 4,
+  "status": "fail",
+  "validatorsRun": {
+    "build": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service run build",
+      "exitCode": 0
+    },
+    "test": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npx --yes tsc --noEmit -p /Users/teodorwaltervido/Desktop/service/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "failedFeatures": [
+      "f1-foundation",
+      "f2-notification-gateway"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "f1-foundation",
+      "severity": "blocking",
+      "description": "CLI status output omits required fields (uptime, active integrations count, connected agents count), so contract assertion A-CLI-02 is not satisfied."
+    },
+    {
+      "featureId": "f1-foundation",
+      "severity": "blocking",
+      "description": "MCP initialize request without explicit Accept header returns Not Acceptable, conflicting with documented verification flow and expected behavior."
+    },
+    {
+      "featureId": "f1-foundation",
+      "severity": "blocking",
+      "description": "No runtime path registers downstream MCP connections from daemon/CLI surfaces, leaving A-MCP-03/A-MCP-04 unverifiable end-to-end."
+    },
+    {
+      "featureId": "f2-notification-gateway",
+      "severity": "blocking",
+      "description": "Webhook ingestion route bypasses IntegrationAdapter/registry and writes directly to store/event bus, violating adapter event flow requirements."
+    },
+    {
+      "featureId": "f2-notification-gateway",
+      "severity": "blocking",
+      "description": "IntegrationRegistry persists status as active before connect completes; failed connect can leave incorrect active state in DB."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Align mission feature metadata with available skills by ensuring a resolvable worker skill exists (or update features to use only available skill names).",
+      "evidence": "Both review reports flagged missing/unaligned worker skill usage and deviations from expected procedure due to unavailable skill instructions.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Update .factory/services.yaml mcp-hub health check probe semantics.",
+      "reason": "ambiguous"
+    },
+    {
+      "observation": "Add .factory/library/architecture.md.",
+      "reason": "ambiguous"
+    }
+  ],
+  "previousRound": ".factory/validation/m1/scrutiny/synthesis.round3.json",
+  "notes": "Re-run executed after round 3. Failed features from prior synthesis remain unresolved because no completed m1 fix feature was available for targeted re-review (f-fix-m1-scrutiny is still pending)."
+}

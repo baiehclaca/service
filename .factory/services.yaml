@@ -1,0 +1,30 @@
+services:
+  mcp-hub:
+    description: SERVICE MCP Hub HTTP server — AI agents connect here
+    port: 3333
+    start: "cd /Users/teodorwaltervido/Desktop/service && node dist/main.js"
+    health_check: "curl -s -o /dev/null -w '%{http_code}' http://localhost:3333/mcp"
+    managed: true
+
+  admin-api:
+    description: SERVICE Admin API + SSE notification stream
+    port: 3334
+    health_check: "curl -s http://localhost:3334/health"
+    managed: true
+    note: "Started as part of the same process as mcp-hub"
+
+off_limits:
+  - port: 3000
+    reason: Hermes WhatsApp bridge
+  - port: 5000
+    reason: macOS ControlCenter
+  - port: 7000
+    reason: macOS ControlCenter
+  - port: 8082
+    reason: Hermes Python gateway
+  - port: 8317
+    reason: CLIProxy
+  - port: 8318
+    reason: CLIProxy
+  - port: 8644
+    reason: Hermes Python process

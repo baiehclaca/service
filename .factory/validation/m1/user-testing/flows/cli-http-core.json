@@ -1,0 +1,333 @@
+{
+  "milestone": "m1",
+  "surface": "cli-http",
+  "groupId": "cli-http-core",
+  "status": "fail",
+  "assertions": {
+    "A-BUILD-01": {
+      "status": "pass",
+      "reason": "npm run build exit 0",
+      "evidence": [
+        "npm run build"
+      ]
+    },
+    "A-BUILD-02": {
+      "status": "pass",
+      "reason": "TypeScript compile without TS errors",
+      "evidence": [
+        "npm run build"
+      ]
+    },
+    "A-BUILD-03": {
+      "status": "pass",
+      "reason": "dist/cli/index.js responds to --help",
+      "evidence": [
+        "node dist/cli/index.js --help"
+      ]
+    },
+    "A-CLI-09": {
+      "status": "pass",
+      "reason": "--help lists available commands",
+      "evidence": [
+        "node dist/cli/index.js --help"
+      ]
+    },
+    "A-TEST-01": {
+      "status": "pass",
+      "reason": "npm test exit 0",
+      "evidence": [
+        "npm test"
+      ]
+    },
+    "A-TEST-02": {
+      "status": "pass",
+      "reason": "test output includes required coverage areas",
+      "evidence": [
+        "npm test"
+      ]
+    },
+    "A-CLI-01": {
+      "status": "pass",
+      "reason": "start launches daemon and writes PID",
+      "evidence": [
+        "node dist/cli/index.js start"
+      ]
+    },
+    "A-CLI-04": {
+      "status": "pass",
+      "reason": "duplicate start is friendly and no duplicate process",
+      "evidence": [
+        "node dist/cli/index.js start (again)"
+      ]
+    },
+    "A-CLI-02": {
+      "status": "pass",
+      "reason": "status shows uptime, active integrations, connected MCPs",
+      "evidence": [
+        "node dist/cli/index.js status"
+      ]
+    },
+    "A-API-01": {
+      "status": "pass",
+      "reason": "/health returns status/version/uptime with HTTP 200",
+      "evidence": [
+        "curl -i /health"
+      ]
+    },
+    "A-MCP-01": {
+      "status": "pass",
+      "reason": "initialize returns MCP InitializeResult and session id",
+      "evidence": [
+        "POST /mcp initialize"
+      ]
+    },
+    "A-MCP-02": {
+      "status": "pass",
+      "reason": "tools/list includes service__ built-in tools",
+      "evidence": [
+        "POST /mcp tools/list"
+      ]
+    },
+    "A-API-03": {
+      "status": "pass",
+      "reason": "notifications endpoint returns array",
+      "evidence": [
+        "GET /api/notifications"
+      ]
+    },
+    "A-API-14": {
+      "status": "pass",
+      "reason": "webhook POST accepted and processed",
+      "evidence": [
+        "POST /webhooks/test-webhook"
+      ]
+    },
+    "A-INT-03": {
+      "status": "pass",
+      "reason": "webhook integration creates notification from POST",
+      "evidence": [
+        "POST /webhooks/test-webhook"
+      ]
+    },
+    "A-API-05": {
+      "status": "pass",
+      "reason": "source filter returns webhook notifications",
+      "evidence": [
+        "GET /api/notifications?source=test-webhook"
+      ]
+    },
+    "A-API-04": {
+      "status": "pass",
+      "reason": "unread=true returns unread notifications only",
+      "evidence": [
+        "GET /api/notifications?unread=true"
+      ]
+    },
+    "A-API-06": {
+      "status": "pass",
+      "reason": "PATCH read marks notification as read",
+      "evidence": [
+        "PATCH /api/notifications/:id/read"
+      ]
+    },
+    "A-MCP-06": {
+      "status": "pass",
+      "reason": "service__get_notifications returns array",
+      "evidence": [
+        "tools/call service__get_notifications"
+      ]
+    },
+    "A-MCP-07": {
+      "status": "pass",
+      "reason": "service__get_notifications accepts limit/source",
+      "evidence": [
+        "tools/call service__get_notifications with args"
+      ]
+    },
+    "A-MCP-08": {
+      "status": "pass",
+      "reason": "service__mark_notification_read returns success",
+      "evidence": [
+        "tools/call service__mark_notification_read"
+      ]
+    },
+    "A-MCP-09": {
+      "status": "pass",
+      "reason": "service__get_unread_count returns unread count",
+      "evidence": [
+        "tools/call service__get_unread_count"
+      ]
+    },
+    "A-MCP-17": {
+      "status": "pass",
+      "reason": "SSE stream opens and remains active",
+      "evidence": [
+        "curl -N /events"
+      ]
+    },
+    "A-MCP-18": {
+      "status": "pass",
+      "reason": "notification delivered to SSE after webhook",
+      "evidence": [
+        "SSE stream + webhook"
+      ]
+    },
+    "A-MCP-19": {
+      "status": "pass",
+      "reason": "SSE data payload contains required fields",
+      "evidence": [
+        "inspect SSE data payload"
+      ]
+    },
+    "A-DB-01": {
+      "status": "pass",
+      "reason": "Database exists at /Users/teodorwaltervido/.service/service.db",
+      "evidence": [
+        "file existence check"
+      ]
+    },
+    "A-DB-02": {
+      "status": "pass",
+      "reason": "required tables exist",
+      "evidence": [
+        "sqlite_master query"
+      ]
+    },
+    "A-DB-05": {
+      "status": "pass",
+      "reason": "notifications_fts virtual table exists",
+      "evidence": [
+        "sqlite_master query"
+      ]
+    },
+    "A-DB-04": {
+      "status": "pass",
+      "reason": "integration config stored non-plaintext (encrypted blob)",
+      "evidence": [
+        "SELECT integrations.config"
+      ]
+    },
+    "A-INT-01": {
+      "status": "pass",
+      "reason": "IntegrationAdapter interface exported",
+      "evidence": [
+        "rg IntegrationAdapter"
+      ]
+    },
+    "A-INT-02": {
+      "status": "pass",
+      "reason": "echo integration generated new synthetic event while active",
+      "evidence": [
+        "poll /api/notifications?source=echo"
+      ]
+    },
+    "A-MCP-03": {
+      "status": "fail",
+      "reason": "downstream MCP tools exposed as <id>__<tool>",
+      "evidence": [
+        "POST /api/mcp-connections + new mcp session tools/list"
+      ]
+    },
+    "A-MCP-04": {
+      "status": "fail",
+      "reason": "tools/call proxies to downstream and returns result",
+      "evidence": [
+        "tools/call namespaced downstream tool"
+      ]
+    },
+    "A-MCP-05": {
+      "status": "pass",
+      "reason": "hub keeps serving other tools when downstream MCP crashes",
+      "evidence": [
+        "crash tool call + service status call"
+      ]
+    },
+    "A-CLI-03": {
+      "status": "pass",
+      "reason": "stop gracefully terminates daemon",
+      "evidence": [
+        "node dist/cli/index.js stop"
+      ]
+    },
+    "A-CLI-05": {
+      "status": "pass",
+      "reason": "stop when not running is friendly and clean",
+      "evidence": [
+        "node dist/cli/index.js stop (again)"
+      ]
+    },
+    "A-API-15": {
+      "status": "pass",
+      "reason": "webhook notifications persist after restart",
+      "evidence": [
+        "webhook -> restart -> GET notifications"
+      ]
+    },
+    "A-DB-03": {
+      "status": "pass",
+      "reason": "notifications survive daemon restart",
+      "evidence": [
+        "restart persistence check"
+      ]
+    }
+  },
+  "passedAssertions": [
+    "A-API-01",
+    "A-API-03",
+    "A-API-04",
+    "A-API-05",
+    "A-API-06",
+    "A-API-14",
+    "A-API-15",
+    "A-BUILD-01",
+    "A-BUILD-02",
+    "A-BUILD-03",
+    "A-CLI-01",
+    "A-CLI-02",
+    "A-CLI-03",
+    "A-CLI-04",
+    "A-CLI-05",
+    "A-CLI-09",
+    "A-DB-01",
+    "A-DB-02",
+    "A-DB-03",
+    "A-DB-04",
+    "A-DB-05",
+    "A-INT-01",
+    "A-INT-02",
+    "A-INT-03",
+    "A-MCP-01",
+    "A-MCP-02",
+    "A-MCP-05",
+    "A-MCP-06",
+    "A-MCP-07",
+    "A-MCP-08",
+    "A-MCP-09",
+    "A-MCP-17",
+    "A-MCP-18",
+    "A-MCP-19",
+    "A-TEST-01",
+    "A-TEST-02"
+  ],
+  "failedAssertions": [
+    {
+      "id": "A-MCP-03",
+      "reason": "downstream MCP tools exposed as <id>__<tool>"
+    },
+    {
+      "id": "A-MCP-04",
+      "reason": "tools/call proxies to downstream and returns result"
+    }
+  ],
+  "blockedAssertions": [],
+  "toolsUsed": [
+    "Execute",
+    "curl",
+    "node",
+    "npm",
+    "python3"
+  ],
+  "frictions": [],
+  "blockers": [],
+  "evidenceDir": "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m1/core"
+}

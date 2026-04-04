@@ -1,0 +1,193 @@
+[
+  {
+    "id": "f1-foundation",
+    "title": "Project Foundation & MCP Hub Core",
+    "description": "Scaffold the TypeScript project, set up the MCP server with Streamable HTTP transport, implement the MCP tool aggregator/proxy that connects to downstream MCPs via stdio, and build the core daemon infrastructure (start/stop/status CLI, PID management, SQLite setup). By end of this feature the SERVICE daemon starts, exposes a valid MCP server at http://localhost:3333/mcp, and an AI agent can connect to it and call tools from a downstream test MCP.",
+    "status": "pending",
+    "skillName": "worker",
+    "milestoneId": "m1",
+    "details": {
+      "tasks": [
+        "Initialize package.json with TypeScript, @modelcontextprotocol/sdk, better-sqlite3, commander, express, chalk, ora, tsx",
+        "Set up tsconfig.json with strict mode, ESM output, Node.js types",
+        "Create src/index.ts — main daemon entry point",
+        "Create src/server/mcp-hub.ts — the core MCP server using McpServer from SDK with StreamableHTTPServerTransport on port 3333",
+        "Create src/server/proxy.ts — spawns downstream MCP stdio servers as child processes, forwards tool calls, aggregates tool lists",
+        "Create src/db/database.ts — SQLite schema: integrations, notifications, agent_sessions, mcp_connections tables",
+        "Create src/cli/index.ts — CLI entry using commander: 'service start', 'service stop', 'service status' commands",
+        "Create src/daemon/manager.ts — daemonize process, write PID file to ~/.service/service.pid",
+        "Write unit tests for tool aggregation and proxy routing",
+        "Create bin/service script that runs the CLI",
+        "npm scripts: build, start, test, service (runs CLI)"
+      ],
+      "technicalNotes": [
+        "Use @modelcontextprotocol/sdk Server class with StreamableHTTPServerTransport (express + POST /mcp endpoint)",
+        "For downstream MCP stdio: spawn child process, pipe stdio, implement JSON-RPC 2.0 multiplexing",
+        "Tool namespacing: prefix each downstream tool with its MCP server ID to avoid collisions, e.g. 'github__create_issue'",
+        "SQLite better-sqlite3 (synchronous) is fine for this use case",
+        "PID file at ~/.service/service.pid, logs at ~/.service/logs/",
+        "Config at ~/.service/config.json"
+      ],
+      "acceptanceCriteria": [
+        "npm run build succeeds with no TypeScript errors",
+        "npm test passes all unit tests",
+        "node dist/cli/index.js start launches daemon and writes PID file",
+        "curl http://localhost:3333/mcp returns valid MCP response",
+        "node dist/cli/index.js status shows running state",
+        "node dist/cli/index.js stop stops the daemon cleanly"
+      ]
+    }
+  },
+  {
+    "id": "f2-notification-gateway",
+    "title": "Notification Gateway & Push System",
+    "description": "Build the 24/7 notification gateway that listens for events from connected integrations and pushes them to AI agents in real time. Implement the IntegrationAdapter interface, the notification storage layer, and the SSE push mechanism so agents always have up-to-date context about what's happening across platforms. Include the base integration framework and a built-in 'echo' test integration.",
+    "status": "pending",
+    "skillName": "worker",
+    "milestoneId": "m1",
+    "details": {
+      "tasks": [
+        "Create src/integrations/types.ts — IntegrationAdapter interface, NotificationEvent type, IntegrationConfig type with JSONSchema for config fields",
+        "Create src/integrations/registry.ts — IntegrationRegistry class: load/unload adapters, store configs in SQLite, hot-reload",
+        "Create src/gateway/notification-store.ts — persist all incoming events to notifications table with timestamp, source, payload, read status",
+        "Create src/gateway/push-manager.ts — manages SSE connections from agents, broadcasts new notifications, supports per-agent subscription filters",
+        "Extend MCP hub: add 'service__get_notifications', 'service__subscribe_notifications', 'service__mark_read' tools",
+        "Create src/integrations/builtin/echo.ts — test integration that generates synthetic events on a timer",
+        "Create src/integrations/builtin/webhook.ts — generic webhook integration: registers an HTTP endpoint, any POST to it creates a notification",
+        "Update database schema: notifications table with id, integration_id, event_type, payload JSON, created_at, read_at, agent_id",
+        "Write tests: notification storage, push delivery, SSE connection lifecycle"
+      ],
+      "technicalNotes": [
+        "SSE endpoint at GET /events on port 3334 (admin API) — agents connect here for real-time stream",
+        "Also expose notifications as MCP tool results: 'service__get_notifications' returns recent unread events",
+        "Use Node.js EventEmitter as internal bus between gateway and push manager",
+        "Each notification: { id, source: 'integration_id', type: 'event_type', title, body, metadata, timestamp }",
+        "Agents can call 'service__subscribe_notifications' to register interest in specific sources/types",
+        "Webhook integration exposes port 3334/webhooks/:id — useful for Zapier, IFTTT, custom apps"
+      ],
+      "acceptanceCriteria": [
+        "Echo integration generates events every 30s, visible in GET /api/notifications",
+        "MCP tool 'service__get_notifications' returns recent events to connected agent",
+        "Webhook POST to http://localhost:3334/webhooks/test creates a notification",
+        "Notifications are persisted in SQLite (survive daemon restart)",
+        "SSE stream at /events delivers real-time notifications to connected clients"
+      ]
+    }
+  },
+  {
+    "id": "f3-integration-system",
+    "title": "Dynamic Integration System & Config UI",
+    "description": "Build the integration management system that allows any integration to be registered dynamically — no code changes required. Implement a terminal UI (TUI) dashboard for operators to add/remove/configure integrations, view live notification feeds, and manage connected MCP servers. Also implement several first-party integration adapters: X/Twitter, Slack, Email (SMTP/IMAP), and a generic HTTP polling integration.",
+    "status": "pending",
+    "skillName": "worker",
+    "milestoneId": "m2",
+    "details": {
+      "tasks": [
+        "Create src/cli/dashboard.ts — interactive TUI using blessed or ink: tabbed layout with Live Feed, Integrations, Connected MCPs, Agent Sessions tabs",
+        "Create src/cli/integration-wizard.ts — 'service integration add <type>' launches interactive prompts for config fields defined by integration's configSchema",
+        "Create src/integrations/builtin/x-twitter.ts — X/Twitter adapter using Twitter API v2: streams mentions/DMs, exposes tools: tweet, reply, retweet, like, search_tweets",
+        "Create src/integrations/builtin/slack.ts — Slack adapter using Bolt SDK: listens to messages/mentions, exposes tools: send_message, list_channels, get_thread",
+        "Create src/integrations/builtin/email.ts — Email adapter using nodemailer + imap-simple: polls inbox, exposes tools: send_email, list_emails, read_email, reply_email",
+        "Create src/integrations/builtin/http-poll.ts — Generic HTTP polling integration: polls any URL on a schedule, creates notification on change/new data",
+        "Create src/api/integrations.ts — REST endpoints on port 3334: GET/POST/DELETE /api/integrations, GET /api/integrations/:id/status",
+        "Create src/api/mcp-connections.ts — REST endpoints: GET/POST/DELETE /api/mcp-connections (manage downstream MCPs)",
+        "Write integration tests for each adapter using mocks",
+        "Add 'service integration list', 'service integration add', 'service integration remove' CLI commands"
+      ],
+      "technicalNotes": [
+        "Integration configs are stored encrypted in SQLite (use built-in crypto for AES-256)",
+        "Each integration's configSchema follows JSON Schema Draft 7 — used to drive the wizard prompts",
+        "X integration requires TWITTER_BEARER_TOKEN, TWITTER_API_KEY/SECRET, ACCESS_TOKEN/SECRET",
+        "Slack integration requires SLACK_BOT_TOKEN, SLACK_APP_TOKEN (Socket Mode)",
+        "Email integration requires SMTP_HOST/PORT/USER/PASS + IMAP_HOST/PORT/USER/PASS",
+        "TUI dashboard refreshes every 2s, shows last 50 notifications in scrollable list",
+        "Connected MCP connections table shows: name, transport, status, tool count, last_seen"
+      ],
+      "acceptanceCriteria": [
+        "'service dashboard' opens TUI with Live Feed, Integrations, MCPs, Agents tabs",
+        "'service integration add webhook' prompts for config and registers it",
+        "X integration (if configured) streams tweets to notification feed",
+        "Slack integration (if configured) receives and shows messages",
+        "Email integration (if configured) polls and shows new emails",
+        "GET /api/integrations returns all configured integrations with status",
+        "All integration configs are encrypted at rest in SQLite"
+      ]
+    }
+  },
+  {
+    "id": "f4-agent-context-tools",
+    "title": "Agent Context Tools & Action Toolkit",
+    "description": "Build the full set of MCP tools that AI agents use to interact with SERVICE: reading context/notifications, taking actions across platforms (send tweet, reply email, post Slack message, etc.), managing memory/notes, and subscribing to real-time alerts. This is what makes SERVICE the 'everything tool' — one connection gives the agent full cross-platform capability.",
+    "status": "pending",
+    "skillName": "worker",
+    "milestoneId": "m2",
+    "details": {
+      "tasks": [
+        "Create src/tools/notification-tools.ts — MCP tools: get_notifications(filter?, limit?), get_unread_count(), mark_notification_read(id), subscribe_to_events(sources[], types[])",
+        "Create src/tools/platform-tools.ts — Dynamic tool generation: iterate all loaded integrations and expose their tools through the MCP hub with integration prefix",
+        "Create src/tools/memory-tools.ts — Agent memory: save_note(key, content), get_note(key), list_notes(), delete_note(key) — stored in SQLite",
+        "Create src/tools/status-tools.ts — service_status(): returns daemon health, connected integrations, active agent sessions, notification counts",
+        "Create src/tools/mcp-management-tools.ts — connect_mcp(name, command, args), disconnect_mcp(name), list_connected_mcps(), get_mcp_tools(name)",
+        "Create src/tools/search-tools.ts — search_notifications(query, sources?, dateRange?) — full-text search across notification history",
+        "Add 'service__help' tool that returns a formatted guide of all available tools and integrations",
+        "Write comprehensive tool tests using MCP test client",
+        "Update AGENTS.md and README with full tool documentation"
+      ],
+      "technicalNotes": [
+        "All tools follow MCP tool schema: name, description, inputSchema (JSON Schema), handler function",
+        "Platform tools are generated dynamically when integrations connect/disconnect",
+        "Tool result format: { success, data, error?, metadata? }",
+        "Memory notes stored in 'agent_notes' SQLite table with agent_id, key, content, updated_at",
+        "search_notifications uses SQLite FTS5 for full-text search on notification payloads",
+        "Tool names use snake_case, namespaced: service__* for built-ins, integration__tool for platform tools"
+      ],
+      "acceptanceCriteria": [
+        "AI agent can call 'service__get_notifications' and receive recent events",
+        "AI agent can call 'service__service_status' and get health info",
+        "AI agent can call 'service__save_note' and 'service__get_note' for cross-session memory",
+        "AI agent can call 'service__connect_mcp' to add a new downstream MCP at runtime",
+        "Platform tools are visible in MCP tool list when integrations are active",
+        "search_notifications returns relevant results with full-text search"
+      ]
+    }
+  },
+  {
+    "id": "f5-polish-docs-packaging",
+    "title": "Polish, Documentation & npm Packaging",
+    "description": "Final polish pass: comprehensive README with quickstart guide, shell completion, auto-update checker, proper error handling and user-friendly error messages throughout, .env setup guide, example configs for common integrations, and npm package setup so SERVICE can be installed globally with 'npm install -g service-mcp'.",
+    "status": "pending",
+    "skillName": "worker",
+    "milestoneId": "m3",
+    "details": {
+      "tasks": [
+        "Write comprehensive README.md: what SERVICE is, architecture diagram (ASCII), quickstart, all CLI commands, integration setup guides, MCP tool reference",
+        "Create examples/ directory with example configs for X, Slack, Email, webhook, custom MCP setups",
+        "Create docs/integrations/ — per-integration setup guide with screenshots/examples",
+        "Add shell completion: 'service completion bash/zsh/fish' generates completion scripts",
+        "Add 'service update' command that checks npm for new versions",
+        "Audit all error paths — ensure every error has a clear, actionable message for the operator",
+        "Add startup banner with version, active integrations count, connected agents count",
+        "Create install script: curl-pipe-sh installer that installs globally and runs setup wizard",
+        "Set up package.json for npm publish: bin, files, engines fields",
+        "Final test run: npm test must pass 100%, coverage report",
+        "Create CHANGELOG.md with v1.0.0 entry",
+        "Add GitHub Actions workflow for CI (lint, test, build)"
+      ],
+      "technicalNotes": [
+        "Binary name: 'service' (npm package: 'service-mcp' to avoid conflicts)",
+        "Global install: npm install -g service-mcp → exposes 'service' command",
+        "Post-install: runs setup wizard if first time",
+        "Shell completion using omelette or custom completion generator",
+        "README ASCII diagram matches the original SERVICE.png architecture"
+      ],
+      "acceptanceCriteria": [
+        "npm pack produces a valid package with no missing files",
+        "README explains the full system in < 5 minutes reading time",
+        "'service --help' shows all commands with descriptions",
+        "npm test passes 100% with coverage > 80%",
+        "All error paths produce friendly, actionable messages",
+        "Example configs are valid and documented"
+      ]
+    }
+  }
+]

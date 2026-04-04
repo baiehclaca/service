@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "service": {
+      "url": "http://localhost:3333/mcp",
+      "_comment": "SERVICE MCP Hub — Cursor connects via Streamable HTTP. Start the daemon first with 'service start'."
+    }
+  }
+}

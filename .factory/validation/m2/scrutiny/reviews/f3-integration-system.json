@@ -1,0 +1,51 @@
+{
+  "featureId": "f3-integration-system",
+  "reviewedAt": "2026-04-03T19:41:28Z",
+  "commitId": "48039d1f410d0065af23fa92d02cdc546c5b232c",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature scaffolds CLI/API/dashboard/integration wiring and adds tests, but three required first-party adapters (X/Twitter, Slack, Email) are mock placeholders rather than real implementations, so key expected behavior from the feature description is not met.",
+    "issues": [
+      {
+        "file": "src/integrations/builtin/x-twitter.ts",
+        "line": 61,
+        "severity": "blocking",
+        "description": "X/Twitter adapter is a stub: comments indicate real twitter-api-v2 integration is not implemented, connect() only flips connected=true, and tool handlers return queued placeholders instead of performing API calls (e.g., tweet/reply/retweet/like/search). This does not satisfy the feature requirement for a first-party X/Twitter adapter implementation."
+      },
+      {
+        "file": "src/integrations/builtin/slack.ts",
+        "line": 46,
+        "severity": "blocking",
+        "description": "Slack adapter is a stub: comments indicate @slack/bolt Socket Mode is not actually initialized, connect() only sets connected=true, and tools return canned success responses without Slack API interaction. This does not satisfy the required Slack first-party adapter behavior."
+      },
+      {
+        "file": "src/integrations/builtin/email.ts",
+        "line": 71,
+        "severity": "blocking",
+        "description": "Email adapter is a stub: comments explicitly defer nodemailer/imap-simple integration, connect() only toggles state, and send/list/read/reply tool handlers return placeholder values instead of SMTP/IMAP operations. This misses the required SMTP+IMAP adapter implementation."
+      },
+      {
+        "file": "src/cli/dashboard.ts",
+        "line": 93,
+        "severity": "non_blocking",
+        "description": "Feature spec calls for 4 panes including an 'Agents' pane, but the bottom-right pane is labeled 'Status'. Functionality is useful, but naming/intent does not strictly match the stated requirement."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The assigned feature uses skillName='worker', but the worker transcript shows Skill tool error ('Skill \"worker\" not found') and the worker proceeded anyway. This indicates shared-state mismatch between feature metadata and available skills/procedure.",
+      "evidence": "handoffs/2026-04-03T18-27-59-346Z__f3-integration-system__d2906f8e-f241-49cc-b0fa-2a4eb8d92b63.json -> handoff.skillFeedback.followedProcedure=false and deviation notes about missing worker skill"
+    },
+    {
+      "area": "knowledge",
+      "observation": "Feature requirements demand concrete first-party integrations for X/Twitter, Slack, and Email, but code/test setup currently allows placeholder adapters to pass. Shared guidance should explicitly state whether 'stub-only' adapters are acceptable at milestone m2 (current evidence suggests they should not be).",
+      "evidence": "src/integrations/builtin/x-twitter.ts:61, src/integrations/builtin/slack.ts:46, src/integrations/builtin/email.ts:71 all document deferred 'In production' behavior while handlers return mock success"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The integration management framework and endpoints are present, but the X/Twitter, Slack, and Email adapters are placeholders rather than real implementations, which is a blocking gap against the feature\u2019s required first-party adapter behavior."
+}

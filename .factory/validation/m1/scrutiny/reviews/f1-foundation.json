@@ -1,0 +1,99 @@
+{
+  "featureId": "f1-foundation",
+  "reviewedAt": "2026-04-03T16:22:30Z",
+  "commitId": "7c7244b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Foundation scaffolding is substantial and core pieces exist (MCP hub, proxy, DB schema, daemon lifecycle), but there are milestone-contract mismatches that block acceptance for f1.",
+    "issues": [
+      {
+        "file": "src/cli/index.ts",
+        "line": 69,
+        "severity": "blocking",
+        "description": "`service status` does not report uptime, active integrations count, or connected agents count required by A-CLI-02; it only prints running state, PID, and URLs."
+      },
+      {
+        "file": "src/server/mcp-hub.ts",
+        "line": 39,
+        "severity": "blocking",
+        "description": "Initialize requests without explicit `Accept: application/json, text/event-stream` are rejected with `Not Acceptable`, while the feature verification step and expected behavior use curl without this header."
+      },
+      {
+        "file": "src/main.ts",
+        "line": 35,
+        "severity": "blocking",
+        "description": "No runtime path exists to register downstream MCP connections in the daemon process (no config load/CLI/API wiring), so A-MCP-03/A-MCP-04 cannot be demonstrated through the product surface despite proxy internals existing."
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "blocking",
+      "description": "CLI status output is missing contract-required fields (uptime, active integrations count, connected agents count).",
+      "evidence": "src/cli/index.ts:69-73 prints only running/PID/URLs; src/daemon/manager.ts:104-119 returns no uptime or counts.",
+      "suggestedFix": "Extend DaemonManager.status() and CLI status rendering to include uptime, active integrations, and connected agents from runtime state."
+    },
+    {
+      "severity": "blocking",
+      "description": "Feature verification command for MCP initialize is incompatible with current server behavior because required Accept header is omitted.",
+      "evidence": "features.json:182 verification step omits Accept header; targeted check returned `{\"error\":{\"message\":\"Not Acceptable: Client must accept both application/json and text/event-stream\"}}` when using that exact command.",
+      "suggestedFix": "Either relax server content negotiation to accept default curl Accept behavior, or update mission validation/verification commands to include `Accept: application/json, text/event-stream` consistently."
+    },
+    {
+      "severity": "blocking",
+      "description": "Downstream MCP aggregation is implemented at class level but not exposed via foundation runtime flow, leaving A-MCP-03/A-MCP-04 unverifiable from daemon+CLI surfaces.",
+      "evidence": "src/server/mcp-hub.ts:277 has addProxy(), but src/main.ts has no loading/registration path and src/cli/index.ts has only start/stop/status commands.",
+      "suggestedFix": "Add a minimal foundation registration path (seed config or CLI/API hookup) so at least one downstream MCP can be connected and called end-to-end."
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "target": "skills",
+      "observation": "Mission feature uses `skillName: worker`, but `.factory/skills` is empty in this repo and transcript shows worker-skill invocation failed.",
+      "rationale": "This caused procedure deviation (`followedProcedure: false`) and repeated ambiguity; add or document canonical worker skill location to prevent recurring drift."
+    },
+    {
+      "target": "services.yaml",
+      "observation": "mcp-hub health check is `curl ... http://localhost:3333/mcp` without MCP headers/body.",
+      "rationale": "`/mcp` expects proper MCP transport semantics and can return non-200 for naive checks; use `/health`-style endpoint or a valid initialize probe for reliable service health monitoring."
+    },
+    {
+      "target": "library",
+      "observation": "No architecture reference file exists at `.factory/library/architecture.md` for reviewer boundary checks.",
+      "rationale": "Review workflow expects architecture guidance; adding/maintaining it would reduce reviewer uncertainty about intended component boundaries."
+    }
+  ],
+  "verification": {
+    "commandsRun": [
+      {
+        "command": "jq -s --arg sid \"6e24bf79-2508-48c0-9650-3f7a00c900c6\" '[.[] | select(.workerSessionId == $sid)] | first' /Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/worker-transcripts.jsonl",
+        "exitCode": 0,
+        "observation": "Transcript skeleton located and reviewed for the assigned worker session."
+      },
+      {
+        "command": "git -C /Users/teodorwaltervido/Desktop/service show --stat 7c7244b && git -C /Users/teodorwaltervido/Desktop/service show 7c7244b",
+        "exitCode": 0,
+        "observation": "Reviewed commit scope and full diff for f1 implementation commit."
+      },
+      {
+        "command": "node /Users/teodorwaltervido/Desktop/service/dist/cli/index.js --help",
+        "exitCode": 0,
+        "observation": "CLI exposes only start/stop/status commands in current runtime."
+      },
+      {
+        "command": "cd /Users/teodorwaltervido/Desktop/service && node dist/cli/index.js start && sleep 2 && curl -s -X POST http://localhost:3333/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}' && node dist/cli/index.js stop",
+        "exitCode": 0,
+        "observation": "Returned JSON-RPC error `Not Acceptable` (content negotiation failure) for the feature's documented initialize command."
+      },
+      {
+        "command": "cd /Users/teodorwaltervido/Desktop/service && node dist/cli/index.js start && sleep 2 && curl -i -s -X POST http://localhost:3333/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"review\",\"version\":\"1.0\"}}}' && node dist/cli/index.js stop",
+        "exitCode": 0,
+        "observation": "Initialize succeeds with explicit Accept header and returns MCP session + valid initialize payload."
+      }
+    ]
+  },
+  "addressesFailureFrom": null,
+  "summary": "Verdict: fail. Core foundation code exists, but there are blocking contract mismatches: incomplete CLI status fields, initialize verification/header incompatibility, and no end-to-end downstream MCP registration path exposed from runtime surfaces."
+}

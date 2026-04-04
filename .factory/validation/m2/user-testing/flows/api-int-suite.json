@@ -1,0 +1,169 @@
+{
+  "groupId": "api-int-suite",
+  "testedAt": "2026-04-03T20:34:00.362585+00:00",
+  "toolsUsed": [
+    "Execute",
+    "Read",
+    "Grep",
+    "curl",
+    "python3",
+    "npm"
+  ],
+  "assertions": [
+    {
+      "id": "A-API-02",
+      "status": "pass",
+      "reason": "GET /api/status returned HTTP 200 with daemon status, integrations list, and mcpConnections list.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-02"
+      ]
+    },
+    {
+      "id": "A-API-07",
+      "status": "pass",
+      "reason": "GET /api/integrations returned configured integrations with id/name/type/status and timestamps before/after CRUD operations.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-07-before",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-07-after-create",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-07-after-delete"
+      ]
+    },
+    {
+      "id": "A-API-08",
+      "status": "pass",
+      "reason": "POST /api/integrations created http-poll integration and returned created record with id/name/type/status (HTTP 201).",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-08-create"
+      ]
+    },
+    {
+      "id": "A-API-09",
+      "status": "pass",
+      "reason": "DELETE /api/integrations/:id removed the created integration and returned success=true.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-09-delete",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/final-integrations.json"
+      ]
+    },
+    {
+      "id": "A-API-10",
+      "status": "pass",
+      "reason": "GET /api/integrations/types returned all available integration types with configSchema payloads.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-10"
+      ]
+    },
+    {
+      "id": "A-API-11",
+      "status": "pass",
+      "reason": "GET /api/mcp-connections returned downstream MCP connection records and reflected add/remove transitions.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-11-before",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-11-after-create",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-11-after-delete",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/final-mcp-connections.json"
+      ]
+    },
+    {
+      "id": "A-API-12",
+      "status": "pass",
+      "reason": "POST /api/mcp-connections registered a stdio MCP and returned id/name/toolsAdded (HTTP 201).",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-12-create",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/mock-mcp.js"
+      ]
+    },
+    {
+      "id": "A-API-13",
+      "status": "pass",
+      "reason": "DELETE /api/mcp-connections/:id disconnected and removed the created MCP connection and returned success=true.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-API-13-delete",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/final-mcp-connections.json"
+      ]
+    },
+    {
+      "id": "A-INT-04",
+      "status": "pass",
+      "reason": "HTTP-poll integration emitted a change notification after fixture content changed between polling intervals.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-INT-04-pre-notifications",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-INT-04-post-notifications"
+      ]
+    },
+    {
+      "id": "A-INT-05",
+      "status": "pass",
+      "reason": "Wizard logic reads schema.properties and schema.required to build prompts; runtime type schemas include expected http-poll properties, satisfying schema-driven prompt contract.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-INT-05-source-check",
+        "/Users/teodorwaltervido/Desktop/service/src/cli/wizard.ts"
+      ]
+    },
+    {
+      "id": "A-INT-06",
+      "status": "pass",
+      "reason": "POST /api/integrations/:id/disable returned inactive and no new http-poll change notification was produced after subsequent fixture update.",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-INT-06-disable",
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/api-int-check-results.json#checks.A-INT-06-after-disable"
+      ]
+    },
+    {
+      "id": "A-TEST-03",
+      "status": "fail",
+      "reason": "Coverage threshold not met: jest coverage report shows All files at 71.28% statements and 71.6% lines (<75%).",
+      "evidence": [
+        "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m2/api-int-suite/npm-test-coverage-output.txt"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Assigned isolation context (SERVICE_DATA_DIR=/tmp/service-utv-m2-g3, SERVICE_MCP_PORT=3633, SERVICE_ADMIN_PORT=3634) could not be honored because runtime is hardcoded to ~/.service and ports 3333/3334.",
+      "resolved": false,
+      "resolution": "Executed validation against live daemon on 3334 and recorded isolation limitation.",
+      "affectedAssertions": [
+        "A-API-02",
+        "A-API-07",
+        "A-API-08",
+        "A-API-09",
+        "A-API-10",
+        "A-API-11",
+        "A-API-12",
+        "A-API-13",
+        "A-INT-04",
+        "A-INT-06"
+      ]
+    }
+  ],
+  "blockers": [],
+  "commandsRun": [
+    {
+      "command": "curl -s -o /tmp/service_m2_g3_health_precheck.out -w \"%{http_code}\" http://localhost:3334/health",
+      "exitCode": 0,
+      "observation": "Health check succeeded on 3334."
+    },
+    {
+      "command": "curl -s -o /tmp/service_m2_g3_health_3634.json -w \"%{http_code}\" http://localhost:3634/health",
+      "exitCode": 7,
+      "observation": "Assigned port 3634 was unreachable."
+    },
+    {
+      "command": "python3 validation harness for A-API/A-INT assertions (writes api-int-check-results.json)",
+      "exitCode": 0,
+      "observation": "All assigned API/integration endpoints executed; generated detailed evidence JSON."
+    },
+    {
+      "command": "npm test -- --coverage",
+      "exitCode": 0,
+      "observation": "Tests passed; overall coverage below 75% (All files statements 71.28%, lines 71.6%)."
+    },
+    {
+      "command": "curl -s http://localhost:3334/api/mcp-connections > final-mcp-connections.json && curl -s http://localhost:3334/api/integrations > final-integrations.json",
+      "exitCode": 0,
+      "observation": "Confirmed temporary test integration and MCP connection were cleaned up."
+    }
+  ],
+  "summary": "Validated 12 assigned assertions: 11 passed, 1 failed (A-TEST-03 coverage <75%). Temporary http-poll integration and mock MCP connection were created and removed successfully. Isolation constraints could not be strictly applied due hardcoded ports/data paths in runtime."
+}

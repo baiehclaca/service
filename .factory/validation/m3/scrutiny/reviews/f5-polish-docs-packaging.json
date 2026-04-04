@@ -1,0 +1,56 @@
+{
+  "featureId": "f5-polish-docs-packaging",
+  "reviewedAt": "2026-04-03T21:15:38Z",
+  "commitId": "bb87e44",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature delivers many polish items (README overhaul, examples, banner, completion/update commands, package metadata, CI, LICENSE/CHANGELOG), but it misses or misimplements several explicit acceptance requirements from the feature definition.",
+    "issues": [
+      {
+        "file": "examples/claude-desktop-config.json",
+        "line": 4,
+        "severity": "blocking",
+        "description": "The Claude config uses `command: \"service\"` with `args: [\"start\"]`, which starts a daemon and exits instead of exposing an MCP server process for Claude's MCP connection. This does not satisfy the requirement that examples/claude-desktop-config.json provide a correct MCP connection config."
+      },
+      {
+        "file": "docs/integrations/",
+        "line": 1,
+        "severity": "blocking",
+        "description": "Required integration setup guides under docs/integrations were not added. The feature explicitly lists `docs/integrations/: per-integration setup guides` as a key task, but the directory/files are missing."
+      },
+      {
+        "file": "src/api/admin.ts",
+        "line": 155,
+        "severity": "blocking",
+        "description": "Error-audit requirement was not completed: catch blocks still return raw `error.message`/`String(error)` rather than using `ServiceError` + `formatError` for actionable, standardized errors. Similar patterns remain across src/ (e.g., lines 168, 181, 194, 265, 282 in this file)."
+      },
+      {
+        "file": "src/utils/errors.ts",
+        "line": 21,
+        "severity": "non_blocking",
+        "description": "`formatError`/`ServiceError` are defined but effectively not integrated into runtime error paths, leaving the new utility underutilized and inconsistent with the intended error-handling convention."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The feature metadata references `skillName: worker`, but that skill file is absent in the repo-level skills directory. The worker transcript shows a direct deviation due to `Skill \"worker\" not found`.",
+      "evidence": "Transcript skeleton for workerSessionId a33d7680-59ec-4cab-89d6-29e6767f1f28 contains `Skill \"worker\" not found`; `LS /Users/teodorwaltervido/Desktop/service/.factory/skills` returned empty directory."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The reviewer playbook expects `.factory/library/architecture.md` for boundary checks, but this mission/repo context lacks that file, reducing shared architectural guidance for scrutiny and workers.",
+      "evidence": "`Read /Users/teodorwaltervido/Desktop/service/.factory/library/architecture.md` returned ENOENT; `.factory/library` contains only `user-testing.md`."
+    },
+    {
+      "area": "conventions",
+      "observation": "AGENTS/feature guidance requires standardized user-facing error handling via ServiceError/formatError, but implementation continues using ad-hoc `error.message` responses in multiple catches. This convention exists but is not effectively enforced by shared state or checklists.",
+      "evidence": "`Grep` over src shows many catch blocks; `formatError` appears only in `src/utils/errors.ts` definition and not in call sites."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Result: fail. Despite substantial polish work, the feature does not fully satisfy its explicit contract due to incorrect Claude MCP example configuration, missing docs/integrations guides, and incomplete error-audit adoption of ServiceError/formatError."
+}

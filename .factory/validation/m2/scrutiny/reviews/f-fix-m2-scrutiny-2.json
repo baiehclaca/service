@@ -1,0 +1,33 @@
+{
+  "featureId": "f-fix-m2-scrutiny-2",
+  "reviewedAt": "2026-04-03T20:22:41Z",
+  "commitId": "62f158311d0d8b94b6c093908c0498585fd0b3b8",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix commit resolves the three prior blocking findings: McpHub now registers/unregisters sessions with PlatformToolsManager, session-init dynamic tools are tracked in dynamicToolHandles for removeTool cleanup, and required adapter SDK dependencies are present with explicit non-mock error paths.",
+    "issues": [
+      {
+        "file": "src/tools/platform-tools.ts",
+        "line": 60,
+        "severity": "non_blocking",
+        "description": "registerSession() applies preloaded integration tools through syncAllIntegrations(), but those handles are not stored in toolHandles; later deregisterIntegrationTools() only removes handles tracked from registerIntegrationTools(). If a session starts after an integration is already loaded, unload can leave stale integration tools on that session."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Feature metadata still references skillName 'worker' while project .factory/skills directory is empty, so skill invocation remains a known no-op/error path in worker sessions.",
+      "evidence": "Mission features.json (f-fix-m2-scrutiny and f-fix-m2-scrutiny-2) use \"skillName\": \"worker\"; /Users/teodorwaltervido/Desktop/service/.factory/skills is empty."
+    },
+    {
+      "area": "services",
+      "observation": "Mission-local worker transcript index and handoff artifacts are incomplete for the reviewed fix session, requiring fallback to global session logs for transcript evidence.",
+      "evidence": "No mission handoff file matched worker session 65cb0061-aeaa-48ce-8229-50c3080af97f in mission handoffs/, and mission worker-transcripts.jsonl had no match for that workerSessionId; transcript was reviewed from /Users/teodorwaltervido/.factory/sessions/-Users-teodorwaltervido/65cb0061-aeaa-48ce-8229-50c3080af97f.jsonl."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/m2/scrutiny/reviews/f-fix-m2-scrutiny.json",
+  "summary": "Pass. This re-run fix adequately addresses all three prior blocking failures from f-fix-m2-scrutiny (session wiring for PlatformToolsManager, complete dynamic-tool handle cleanup in removeTool, and runtime SDK dependency/non-mock adapter behavior). One non-blocking lifecycle edge case remains in platform-tool deregistration for sessions created after an integration is already loaded."
+}

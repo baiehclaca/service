@@ -1,0 +1,54 @@
+{
+  "milestone": "m1",
+  "round": 5,
+  "status": "fail",
+  "validatorsRun": {
+    "build": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service run build",
+      "exitCode": 0
+    },
+    "test": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npx --yes tsc --noEmit -p /Users/teodorwaltervido/Desktop/service/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm --prefix /Users/teodorwaltervido/Desktop/service run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": [
+      "f-fix-m1-scrutiny"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "f-fix-m1-scrutiny",
+      "severity": "blocking",
+      "description": "For registered webhook adapters, the route calls `adapter.receiveWebhook(...)` and then immediately calls `store.insert(event)` + `eventBus.emitNotification(event)` again. But `IntegrationRegistry.loadIntegration()` already wires `adapter.onEvent(...)` to persist + emit, so webhook events are duplicated (double insert/double push) in the adapter path."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Align mission feature skill metadata and transcript-location guidance with available runtime skills and actual transcript storage paths.",
+      "evidence": "`/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/features.json` shows `skillName: \"worker\"`; `/Users/teodorwaltervido/Desktop/service/.factory/skills` is empty; fix session evidence appears in `/Users/teodorwaltervido/.factory/sessions/-Users-teodorwaltervido/5ec5c958-8045-4e40-b902-7e1706cb38e5.jsonl` and mission `progress_log.jsonl` rather than mission transcript rows for that session ID.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/m1/scrutiny/synthesis.round4.json",
+  "notes": "Re-run executed after f-fix-m1-scrutiny completion. Validators pass, but fix review reports a remaining blocking webhook duplication issue in the registered adapter path."
+}

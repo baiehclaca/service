@@ -1,0 +1,544 @@
+{
+  "features": [
+    {
+      "id": "scrutiny-validator-m3",
+      "description": "Scrutiny validation for milestone \"m3\". Runs test suite, typecheck, and lint. Spawns review subagents for each completed feature. Synthesizes findings. Always returns to orchestrator.",
+      "skillName": "scrutiny-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m3\" are complete"
+      ],
+      "expectedBehavior": [
+        "Validators pass (test, typecheck, lint)",
+        "Review subagents spawned for each feature",
+        "Findings synthesized into scrutiny report"
+      ],
+      "verificationSteps": [],
+      "milestone": "m3",
+      "status": "pending",
+      "workerSessionIds": [
+        "23313d45-3520-48b6-af23-76facd7d11d8"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": null
+    },
+    {
+      "id": "user-testing-validator-m3",
+      "description": "User testing validation for milestone \"m3\". Determines testable assertions from features' fulfills field, sets up environment, spawns flow validator subagents, synthesizes results. Always returns to orchestrator.",
+      "skillName": "user-testing-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m3\" are complete"
+      ],
+      "expectedBehavior": [
+        "Testable assertions determined from fulfills mapping",
+        "Environment set up (services started, data seeded)",
+        "Flow validator subagents spawned and completed",
+        "Results synthesized, validation-state.json updated"
+      ],
+      "verificationSteps": [],
+      "milestone": "m3",
+      "status": "pending",
+      "workerSessionIds": [],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": null
+    },
+    {
+      "id": "f1-foundation",
+      "description": "Scaffold the TypeScript project, set up the MCP server with Streamable HTTP transport on port 3333, implement the MCP tool aggregator/proxy that connects to downstream MCPs via stdio child processes, and build the core daemon infrastructure (start/stop/status CLI commands, PID file management, SQLite schema initialization). By end of this feature the SERVICE daemon starts, exposes a valid MCP server at http://localhost:3333/mcp, and an AI agent can connect and call tools from a downstream test MCP.\n\nKEY TASKS:\n- Initialize package.json: name='service-mcp', type='module'. Deps: @modelcontextprotocol/sdk, better-sqlite3, express, commander, chalk, ora, tsx. DevDeps: typescript, @types/node, @types/express, @types/better-sqlite3, jest, ts-jest, @types/jest\n- tsconfig.json: target ES2022, module NodeNext, strict true, outDir dist/, rootDir src/\n- src/db/schema.ts — SQL CREATE TABLE for: integrations, notifications, mcp_connections, agent_sessions, agent_notes + FTS5 virtual table\n- src/db/database.ts — Database class wrapping better-sqlite3, opens ~/.service/service.db, runs migrations\n- src/server/proxy.ts — StdioMcpProxy: spawns child process, JSON-RPC 2.0 over stdio, listTools(), callTool(), crash recovery with exponential backoff\n- src/server/mcp-hub.ts — McpHub: McpServer + StreamableHTTPServerTransport on express POST /mcp (port 3333), aggregates downstream tools namespaced as '{mcpId}__{toolName}', routes tool calls\n- src/daemon/manager.ts — start/stop/status + PID file at ~/.service/service.pid\n- src/cli/index.ts — Commander: 'service start', 'service stop', 'service status', '--help'\n- src/main.ts — daemon entry: init DB, McpHub, express servers (3333 + 3334 placeholder), SIGTERM handler\n- bin/service.js — shebang entry\n- Tests: proxy.test.ts, mcp-hub.test.ts, database.test.ts\n- npm scripts: build (tsc), test (jest --forceExit), start (node dist/main.js), service (tsx src/cli/index.ts)\n\nTECHNICAL NOTES:\n- Use McpServer from @modelcontextprotocol/sdk/server/mcp.js + StreamableHTTPServerTransport\n- ESM: all imports use .js extensions\n- Tool namespacing: strip prefix when routing back to downstream proxy\n- PID + state at ~/.service/\n- Tests use --forceExit, mock child processes",
+      "skillName": "worker",
+      "preconditions": [],
+      "expectedBehavior": [
+        "npm run build exits 0, no TypeScript errors, dist/ created",
+        "npm test exits 0, all unit tests pass",
+        "node dist/main.js starts daemon, writes PID to ~/.service/service.pid",
+        "curl -X POST http://localhost:3333/mcp with initialize request returns valid MCP InitializeResult",
+        "POST /mcp with tools/list returns array including service__ built-in tools",
+        "node dist/cli/index.js stop cleanly stops the daemon"
+      ],
+      "verificationSteps": [
+        "cd ~/Desktop/service && npm run build",
+        "npm test",
+        "node dist/main.js &; sleep 2; curl -X POST http://localhost:3333/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}'",
+        "node dist/cli/index.js status",
+        "node dist/cli/index.js stop"
+      ],
+      "fulfills": [
+        "A-CLI-01",
+        "A-CLI-02",
+        "A-CLI-03",
+        "A-CLI-04",
+        "A-CLI-05",
+        "A-CLI-09",
+        "A-MCP-01",
+        "A-MCP-02",
+        "A-MCP-03",
+        "A-MCP-04",
+        "A-MCP-05",
+        "A-DB-01",
+        "A-DB-02",
+        "A-BUILD-01",
+        "A-BUILD-02",
+        "A-BUILD-03",
+        "A-TEST-01",
+        "A-TEST-02"
+      ],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "6e24bf79-2508-48c0-9650-3f7a00c900c6"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "6e24bf79-2508-48c0-9650-3f7a00c900c6"
+    },
+    {
+      "id": "f2-notification-gateway",
+      "description": "Build the 24/7 notification gateway: IntegrationAdapter interface, notification storage in SQLite, SSE push system for real-time agent delivery, and two built-in integrations (echo test + generic webhook). Extend the MCP hub with notification tools. After this feature a webhook POST creates a notification visible via SSE, MCP tool, and REST API — and notifications survive daemon restarts.\n\nKEY TASKS:\n- src/integrations/types.ts — IntegrationAdapter interface, NotificationEvent type, IntegrationConfig type with JSONSchema\n- src/gateway/notification-store.ts — SQLite CRUD: insert, getRecent(limit, source?, unread?), markRead, getUnreadCount, search (FTS5). Config encryption: AES-256-GCM via Node.js crypto, key from ~/.service/.encryption_key\n- src/gateway/event-bus.ts — EventEmitter singleton\n- src/gateway/push-manager.ts — SSE connection pool, heartbeat every 30s, broadcasts to all on new event\n- src/api/admin.ts — Express router port 3334: GET /health, GET /events (SSE), GET /api/notifications (paginated, ?unread, ?source), PATCH /api/notifications/:id/read, POST /webhooks/:integrationId\n- src/integrations/builtin/echo.ts — synthetic events every 30s (configurable interval_seconds)\n- src/integrations/builtin/webhook.ts — listens to POST /webhooks/:id, creates NotificationEvent\n- src/integrations/registry.ts — load/unload adapters, stores configs in DB\n- Extend McpHub: add service__get_notifications, service__get_unread_count, service__mark_notification_read\n- Update main.ts: start both express servers (3333 MCP + 3334 admin), init all gateway components\n- Tests: notification-store, push-manager, echo integration, webhook integration\n\nSSE FORMAT: id: {uuid}\\nevent: notification\\ndata: {JSON}\\n\\n\nEncryption: AES-256-GCM, random IV prepended to ciphertext, stored as BLOB",
+      "skillName": "worker",
+      "preconditions": [
+        "f1-foundation"
+      ],
+      "expectedBehavior": [
+        "GET http://localhost:3334/health returns {status:'ok'}",
+        "POST http://localhost:3334/webhooks/test creates a notification",
+        "GET http://localhost:3334/api/notifications returns the notification",
+        "GET http://localhost:3334/events SSE stream stays open and delivers events",
+        "service__get_notifications MCP tool returns recent notifications",
+        "Notifications persist after daemon restart"
+      ],
+      "verificationSteps": [
+        "curl http://localhost:3334/health",
+        "curl -X POST http://localhost:3334/webhooks/test-webhook -H 'Content-Type: application/json' -d '{\"title\":\"Test\",\"body\":\"hello\"}'",
+        "curl http://localhost:3334/api/notifications",
+        "Restart daemon, curl /api/notifications — same notification still present"
+      ],
+      "fulfills": [
+        "A-MCP-06",
+        "A-MCP-07",
+        "A-MCP-08",
+        "A-MCP-09",
+        "A-MCP-17",
+        "A-MCP-18",
+        "A-MCP-19",
+        "A-API-01",
+        "A-API-03",
+        "A-API-04",
+        "A-API-05",
+        "A-API-06",
+        "A-API-14",
+        "A-API-15",
+        "A-DB-03",
+        "A-DB-04",
+        "A-DB-05",
+        "A-INT-01",
+        "A-INT-02",
+        "A-INT-03"
+      ],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "c05293b2-d7a8-46bf-b852-04827c72e495"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "c05293b2-d7a8-46bf-b852-04827c72e495"
+    },
+    {
+      "id": "f-fix-m1-scrutiny",
+      "description": "Address all 5 blocking issues found by the scrutiny-validator-m1 code review. COMPLETED via direct task session 5ec5c958. All fixes implemented in commit 8e94671: (1) CLI status now shows uptime/active integrations/connected MCPs via state.json + /api/status; (2) MCP Accept header relaxed via Proxy wrapper; (3) Daemon auto-loads MCP connections from DB on startup, /api/mcp-connections POST/DELETE added; (4) Webhook route routes through WebhookIntegration.receiveWebhook(); (5) IntegrationRegistry uses connecting→active→error state transitions.",
+      "skillName": "worker",
+      "preconditions": [
+        "f2-notification-gateway"
+      ],
+      "expectedBehavior": [
+        "service status shows uptime, active integrations count, connected MCPs count",
+        "MCP initialize returns 200 without explicit Accept header",
+        "Daemon auto-connects MCP connections saved in DB on startup",
+        "POST /api/mcp-connections saves and connects a downstream MCP",
+        "POST /webhooks/:id goes through the WebhookIntegration adapter",
+        "IntegrationRegistry only marks status=active after connect() succeeds"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test — passes",
+        "curl -X POST http://localhost:3333/mcp -H 'Content-Type: application/json' -d '{...initialize...}' — 200 OK"
+      ],
+      "fulfills": [
+        "A-CLI-02",
+        "A-MCP-01",
+        "A-MCP-03",
+        "A-MCP-04",
+        "A-API-14",
+        "A-INT-03"
+      ],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "5ec5c958-8045-4e40-b902-7e1706cb38e5"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "5ec5c958-8045-4e40-b902-7e1706cb38e5"
+    },
+    {
+      "id": "f-fix-m1-scrutiny-2",
+      "description": "Fix duplicate webhook notification persistence: admin.ts POST /webhooks/:integrationId was calling adapter.receiveWebhook() THEN also directly calling store.insert() + eventBus.emitNotification(), causing double notifications. Fixed by removing the duplicate calls in the registered-adapter path — only adapter.receiveWebhook() is called there. Implemented via direct task session f291deb7, commit 7cb7ef5. Build/test/lint all green (72 tests pass).",
+      "skillName": "worker",
+      "preconditions": [
+        "f-fix-m1-scrutiny"
+      ],
+      "expectedBehavior": [
+        "POST /webhooks/:integrationId creates exactly one notification (not two)",
+        "npm run build passes",
+        "npm test passes 72 tests"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test"
+      ],
+      "fulfills": [
+        "A-API-14",
+        "A-INT-03"
+      ],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "f291deb7-43bf-4769-9759-84d22f12e59f"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "f291deb7-43bf-4769-9759-84d22f12e59f"
+    },
+    {
+      "id": "scrutiny-validator-m1",
+      "description": "Scrutiny validation for milestone \"m1\". Runs test suite, typecheck, and lint. Spawns review subagents for each completed feature. Synthesizes findings. Always returns to orchestrator.",
+      "skillName": "scrutiny-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m1\" are complete"
+      ],
+      "expectedBehavior": [
+        "Validators pass (test, typecheck, lint)",
+        "Review subagents spawned for each feature",
+        "Findings synthesized into scrutiny report"
+      ],
+      "verificationSteps": [],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "ce4498cf-5f39-429c-b235-b7112fea2354",
+        "67742d80-b1d0-4eee-a4ab-1be53e33898f",
+        "6a06edb1-ea4c-4df1-89b9-f774afb7b617",
+        "5a9ec344-36d9-412e-9b37-9adb386f386b",
+        "1dc336d7-8267-40fc-a4ef-919130fba58b",
+        "508d3a37-a572-4701-868a-588880d89962",
+        "2cc45c75-13cf-4c31-848a-8f18a36ce98d"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "2cc45c75-13cf-4c31-848a-8f18a36ce98d"
+    },
+    {
+      "id": "f-fix-m1-user-testing-mcp03",
+      "description": "Fix A-MCP-03/04: downstream MCP tools added via addProxyById() not appearing in active MCP sessions. Root cause: McpHub stored transport references only (not McpServer instances), so dynamic tool additions weren't propagated to existing sessions. Fix: track SessionEntry with both server+transport per session; on addProxyById() call registerProxyToolsOnServer() on all active sessions; on removeProxy() call handle.remove() on all sessions. Also fixed inputSchema cast (z.object({}).passthrough()). Added 2 new tests. Commit c272554. Build/test(74)/lint all green.",
+      "skillName": "worker",
+      "preconditions": [
+        "f-fix-m1-scrutiny-2"
+      ],
+      "expectedBehavior": [
+        "POST /api/mcp-connections returns toolsAdded and tools appear in subsequent tools/list",
+        "Namespaced downstream tool calls work end-to-end",
+        "npm test passes 74 tests"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test"
+      ],
+      "fulfills": [
+        "A-MCP-03",
+        "A-MCP-04"
+      ],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "1ffceb6a-e92c-41ce-80cb-7f8d286bf2f9"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "1ffceb6a-e92c-41ce-80cb-7f8d286bf2f9"
+    },
+    {
+      "id": "user-testing-validator-m1",
+      "description": "User testing validation for milestone \"m1\". Determines testable assertions from features' fulfills field, sets up environment, spawns flow validator subagents, synthesizes results. Always returns to orchestrator.",
+      "skillName": "user-testing-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m1\" are complete"
+      ],
+      "expectedBehavior": [
+        "Testable assertions determined from fulfills mapping",
+        "Environment set up (services started, data seeded)",
+        "Flow validator subagents spawned and completed",
+        "Results synthesized, validation-state.json updated"
+      ],
+      "verificationSteps": [],
+      "milestone": "m1",
+      "status": "completed",
+      "workerSessionIds": [
+        "91d33969-97a7-4ca4-af75-1433fed3bd67",
+        "7c34e06e-5c73-4a5f-816f-15973ec6dcb1"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "7c34e06e-5c73-4a5f-816f-15973ec6dcb1"
+    },
+    {
+      "id": "f3-integration-system",
+      "description": "Build the integration management system with full CLI wizard, TUI dashboard, REST API for integration CRUD, and first-party adapter implementations for X/Twitter, Slack, Email (SMTP+IMAP), and HTTP-poll.\n\nKEY TASKS:\n- src/integrations/builtin/x-twitter.ts — twitter-api-v2: stream tweets, tools: tweet, reply, retweet, like, search_tweets\n- src/integrations/builtin/slack.ts — @slack/bolt Socket Mode: message events, tools: send_message, list_channels, get_thread, react\n- src/integrations/builtin/email.ts — nodemailer + imap-simple: poll inbox, tools: send_email, list_emails, read_email, reply_email\n- src/integrations/builtin/http-poll.ts — fetch URL on schedule, SHA-256 hash change detection, tool: fetch_now\n- Update IntegrationRegistry: add all 4 new types, add enable/disable methods\n- src/cli/wizard.ts — inquirer-based wizard: schema-driven prompts from configSchema JSON Schema\n- src/cli/dashboard.ts — blessed TUI: 4 panes (Live Feed, Integrations, MCPs, Agents), refreshes every 2s from admin API\n- Extend CLI: integration list/add/remove/enable/disable, mcp list/add/remove, dashboard command\n- Extend admin.ts: GET/POST/DELETE /api/integrations, GET /api/integrations/types, GET/POST/DELETE /api/mcp-connections, GET /api/status\n- ajv validation of integration configs against configSchema\n- Tests: wizard, each new adapter (mocked), dashboard smoke test",
+      "skillName": "worker",
+      "preconditions": [
+        "f2-notification-gateway"
+      ],
+      "expectedBehavior": [
+        "service integration list outputs table of integrations",
+        "service integration add webhook prompts for name and registers it",
+        "service integration remove <id> removes integration",
+        "service dashboard opens TUI without crash",
+        "GET /api/integrations/types returns all 6 integration types with configSchema",
+        "GET /api/mcp-connections returns downstream MCPs",
+        "Integration disable/enable works without daemon restart"
+      ],
+      "verificationSteps": [
+        "node dist/cli/index.js integration list",
+        "node dist/cli/index.js integration add webhook (non-interactive: pass --name test-webhook)",
+        "curl http://localhost:3334/api/integrations/types",
+        "curl http://localhost:3334/api/status"
+      ],
+      "fulfills": [
+        "A-CLI-06",
+        "A-CLI-07",
+        "A-CLI-08",
+        "A-CLI-10",
+        "A-CLI-11",
+        "A-CLI-12",
+        "A-CLI-13",
+        "A-CLI-14",
+        "A-CLI-15",
+        "A-API-02",
+        "A-API-07",
+        "A-API-08",
+        "A-API-09",
+        "A-API-10",
+        "A-API-11",
+        "A-API-12",
+        "A-API-13",
+        "A-INT-04",
+        "A-INT-05",
+        "A-INT-06"
+      ],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "bfcb36f8-d16a-42ae-b0bc-9d781948ab72",
+        "d2906f8e-f241-49cc-b0fa-2a4eb8d92b63"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "d2906f8e-f241-49cc-b0fa-2a4eb8d92b63"
+    },
+    {
+      "id": "f4-agent-context-tools",
+      "description": "Complete the full agent-facing MCP tool suite and reach ≥75% test coverage.\n\nKEY TASKS:\n- src/tools/memory-tools.ts — service__save_note, service__get_note, service__list_notes, service__delete_note (SQLite agent_notes table)\n- src/tools/mcp-management-tools.ts — service__connect_mcp, service__disconnect_mcp, service__list_connected_mcps\n- src/tools/search-tools.ts — service__search_notifications (FTS5)\n- src/tools/platform-tools.ts — PlatformToolsManager: auto-generates MCP tools from active integration adapters, registers/deregisters dynamically on integration load/unload\n- src/tools/status-tools.ts — service__service_status (full health info)\n- src/tools/help-tools.ts — service__help (dynamic markdown guide of all tools)\n- Update McpHub: addTool(name, desc, schema, handler) and removeTool(name) for dynamic registration\n- Update main.ts: init PlatformToolsManager, register all tool modules\n- Add tests for all new tools, run coverage and verify ≥75%",
+      "skillName": "worker",
+      "preconditions": [
+        "f3-integration-system"
+      ],
+      "expectedBehavior": [
+        "service__save_note and service__get_note round-trip works",
+        "service__list_connected_mcps returns current downstream MCPs",
+        "service__connect_mcp adds a new MCP and its tools appear in tools/list",
+        "service__search_notifications returns results matching query",
+        "service__service_status returns version, uptime, integration count",
+        "service__help returns formatted tool guide",
+        "npm test --coverage shows ≥75% coverage"
+      ],
+      "verificationSteps": [
+        "npm test -- --coverage (verify ≥75%)",
+        "POST /mcp tools/list — verify all service__ tools present",
+        "POST /mcp tools/call service__save_note {key:'test',content:'hello'}",
+        "POST /mcp tools/call service__get_note {key:'test'} — returns 'hello'"
+      ],
+      "fulfills": [
+        "A-MCP-10",
+        "A-MCP-11",
+        "A-MCP-12",
+        "A-MCP-13",
+        "A-MCP-14",
+        "A-MCP-15",
+        "A-MCP-16",
+        "A-TEST-03"
+      ],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "e4018c3b-cec2-43a8-a0b7-367a60940826",
+        "0f7f9b4b-b6ad-4e69-aa55-a5ed0dec7f51"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "0f7f9b4b-b6ad-4e69-aa55-a5ed0dec7f51"
+    },
+    {
+      "id": "f-fix-m2-scrutiny",
+      "description": "Fix 6 blocking/non-blocking issues from m2 scrutiny: (1) X/Twitter real API wiring via twitter-api-v2 dynamic import; (2) Slack real API via @slack/bolt Socket Mode + WebClient; (3) Email real SMTP/IMAP via nodemailer + imap-simple with polling; (4) PlatformToolsManager wired to IntegrationRegistry lifecycle events (EventEmitter) in main.ts; (5) McpHub.removeTool iterates active sessions and calls handle.remove() for clean deregistration; (6) Dashboard 'Status' pane renamed 'Agents'. Commit 0c3e885. 255 tests pass, build/lint green.",
+      "skillName": "worker",
+      "preconditions": [
+        "f4-agent-context-tools"
+      ],
+      "expectedBehavior": [
+        "X/Twitter adapter real API wiring (dynamic import)",
+        "Slack adapter uses @slack/bolt Socket Mode",
+        "Email adapter uses nodemailer + imap-simple polling",
+        "Integration load/unload events wire to PlatformToolsManager in runtime",
+        "removeTool cleans up handles in all active sessions",
+        "Dashboard shows Agents pane not Status"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test"
+      ],
+      "fulfills": [
+        "A-CLI-12",
+        "A-CLI-13",
+        "A-CLI-14",
+        "A-CLI-15",
+        "A-MCP-16",
+        "A-INT-04",
+        "A-INT-05",
+        "A-INT-06"
+      ],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "d9613a1f-7b3b-48fb-be25-f982b6c7621c"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "d9613a1f-7b3b-48fb-be25-f982b6c7621c"
+    },
+    {
+      "id": "f-fix-m2-scrutiny-2",
+      "description": "Fix 3 remaining m2 blocking issues: (1) PlatformToolsManager session registration: added registerSession/unregisterSession, McpHub.setPlatformToolsManager(), wired in main.ts; (2) McpHub tool handle tracking unified — session-init tools now stored in dynamicToolHandles for complete removeTool cleanup; (3) Added twitter-api-v2, @slack/bolt, nodemailer, imap-simple to package.json, removed mock-success fallbacks, adapters now throw/return explicit errors if packages unavailable. Commit 62f1583. 258 tests pass, build/lint green.",
+      "skillName": "worker",
+      "preconditions": [
+        "f-fix-m2-scrutiny"
+      ],
+      "expectedBehavior": [
+        "Platform tools from integrations propagate to active MCP sessions",
+        "removeTool cleans up all handle types in active sessions",
+        "Adapter packages in package.json, no mock-success responses",
+        "npm test passes 258 tests"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test"
+      ],
+      "fulfills": [
+        "A-MCP-14",
+        "A-MCP-16",
+        "A-INT-04",
+        "A-INT-05",
+        "A-INT-06"
+      ],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "65cb0061-aeaa-48ce-8229-50c3080af97f"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "65cb0061-aeaa-48ce-8229-50c3080af97f"
+    },
+    {
+      "id": "scrutiny-validator-m2",
+      "description": "Scrutiny validation for milestone \"m2\". Runs test suite, typecheck, and lint. Spawns review subagents for each completed feature. Synthesizes findings. Always returns to orchestrator.",
+      "skillName": "scrutiny-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m2\" are complete"
+      ],
+      "expectedBehavior": [
+        "Validators pass (test, typecheck, lint)",
+        "Review subagents spawned for each feature",
+        "Findings synthesized into scrutiny report"
+      ],
+      "verificationSteps": [],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "5dcfd012-068d-4a0a-a63c-399b6ed4754f",
+        "ea5576ac-f91e-40da-b46f-a91120b1a2e1",
+        "4a91550b-d31c-414e-a7d4-4a9a8d4b9672"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "4a91550b-d31c-414e-a7d4-4a9a8d4b9672"
+    },
+    {
+      "id": "user-testing-validator-m2",
+      "description": "User testing validation for milestone \"m2\". Determines testable assertions from features' fulfills field, sets up environment, spawns flow validator subagents, synthesizes results. Always returns to orchestrator.",
+      "skillName": "user-testing-validator",
+      "preconditions": [
+        "All implementation features for milestone \"m2\" are complete"
+      ],
+      "expectedBehavior": [
+        "Testable assertions determined from fulfills mapping",
+        "Environment set up (services started, data seeded)",
+        "Flow validator subagents spawned and completed",
+        "Results synthesized, validation-state.json updated"
+      ],
+      "verificationSteps": [],
+      "milestone": "m2",
+      "status": "completed",
+      "workerSessionIds": [
+        "28fcd406-985e-4111-b66a-5e17279fea1b",
+        "f6e8bd48-c408-49f6-815e-3494d2f13276"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "f6e8bd48-c408-49f6-815e-3494d2f13276"
+    },
+    {
+      "id": "f-fix-m3-scrutiny",
+      "description": "Fix 3 m3 scrutiny blocking issues: (1) claude-desktop-config.json corrected to use url: http://localhost:3333/mcp form (Streamable HTTP transport) instead of wrong daemon start command; (2) docs/integrations/ guides created for all 6 integration types (x-twitter, slack, email, webhook, http-poll, custom); (3) admin.ts catch blocks standardized to use formatError() from utils/errors.ts. Commit 1562845. Build/test(349)/lint all green.",
+      "skillName": "worker",
+      "preconditions": ["f5-polish-docs-packaging"],
+      "expectedBehavior": [
+        "examples/claude-desktop-config.json uses url: http://localhost:3333/mcp",
+        "docs/integrations/ has 6 setup guide files",
+        "admin.ts catch blocks use formatError()",
+        "npm test passes 349 tests"
+      ],
+      "verificationSteps": ["npm run build && npm test", "ls docs/integrations/"],
+      "fulfills": ["A-CLI-09"],
+      "milestone": "m3",
+      "status": "completed",
+      "workerSessionIds": ["de2f8bdf-eb74-4d20-8919-6c3f2da20b38"],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "de2f8bdf-eb74-4d20-8919-6c3f2da20b38"
+    },
+    {
+      "id": "f5-polish-docs-packaging",
+      "description": "Final polish: comprehensive README, startup banner, shell completion, npm packaging, actionable error messages, example configs, GitHub Actions CI.\n\nKEY TASKS:\n- README.md: title, ASCII diagram, quickstart (5 steps), CLI reference, MCP tool reference, integration setup guides, claude-desktop-config.json example\n- examples/: mcp-connections.json, webhook-integration.sh, claude-desktop-config.json, cursor-mcp-config.json\n- docs/integrations/: per-integration setup guides\n- Startup banner in main.ts: ASCII 'SERVICE' art, version, ports, integration count\n- 'service completion [shell]' command for bash/zsh/fish\n- 'service update' command: check npm registry for new version\n- Error audit: all catch blocks → friendly messages via ServiceError + formatError\n- package.json: bin, files, engines fields for npm publish\n- .github/workflows/ci.yml: lint + build + test on push/PR\n- LICENSE (MIT), CHANGELOG.md v1.0.0\n- Final: npm run build ✓, npm test ✓, npm pack ✓",
+      "skillName": "worker",
+      "preconditions": [
+        "f4-agent-context-tools"
+      ],
+      "expectedBehavior": [
+        "npm run build passes",
+        "npm test passes 100%",
+        "npm pack produces valid tarball",
+        "service --help shows all commands",
+        "README explains the system clearly",
+        "examples/claude-desktop-config.json shows correct MCP connection config"
+      ],
+      "verificationSteps": [
+        "npm run build && npm test && npm pack",
+        "node dist/cli/index.js --help",
+        "cat examples/claude-desktop-config.json",
+        "cat README.md | head -100"
+      ],
+      "fulfills": [
+        "A-CLI-12",
+        "A-CLI-13",
+        "A-CLI-14",
+        "A-CLI-15"
+      ],
+      "milestone": "m3",
+      "status": "completed",
+      "workerSessionIds": [
+        "a33d7680-59ec-4cab-89d6-29e6767f1f28"
+      ],
+      "currentWorkerSessionId": null,
+      "completedWorkerSessionId": "a33d7680-59ec-4cab-89d6-29e6767f1f28"
+    }
+  ]
+}
