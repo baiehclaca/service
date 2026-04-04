@@ -1,0 +1,26 @@
+{
+  "featureId": "f-mcp-manager",
+  "reviewedAt": "2026-04-04T21:50:47Z",
+  "commitId": "b88c8c8068d6cc835b4e2e141f9faa982495ee11",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Pass. The two prior blocking issues are fixed: MCP detail reconnect/remove no longer targets stale IDs after reconnect, and MCP list tool count rendering is restored with a valid API data path from GET /api/mcp-connections.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Feature metadata references skillName=\"worker\", but the transcript skeleton shows \"Skill 'worker' not found\" and implementation proceeded without a skill procedure.",
+      "evidence": "worker-transcripts.jsonl entry for session 86ce05e2-fceb-4082-b2b1-2603b5ee64b4 includes Tool Result: Error: Skill \"worker\" not found; .factory/skills directory is empty."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Reviewer prompt expects .factory/library/architecture.md for boundary checks, but this file is missing in the repo.",
+      "evidence": "LS /Users/teodorwaltervido/Desktop/service/.factory/library shows only user-testing.md; Read on .factory/library/architecture.md returns ENOENT."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/m7/scrutiny/reviews/f-mcp-manager.json",
+  "summary": "Pass: prior m7 blockers are resolved. Evidence: McpDetail now tracks and uses currentId after reconnect (stale-ID bug fixed), GET /api/mcp-connections now returns toolCount via hub.getToolCountForProxy, and McpList renders tool counts from toolCount when present."
+}
