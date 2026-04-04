@@ -3,7 +3,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import express, { type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { StdioMcpProxy } from './proxy.js';
+import { StdioMcpProxy, type McpToolDefinition } from './proxy.js';
 import { z } from 'zod';
 import type { NotificationStore } from '../gateway/notification-store.js';
 import type { MemoryTools } from '../tools/memory-tools.js';
@@ -692,6 +692,17 @@ export class McpHub {
       return tools.length;
     } catch {
       return 0;
+    }
+  }
+
+  /** Get the tools for a given MCP proxy by ID. Returns [] if unavailable. */
+  async getToolsForProxy(mcpId: string): Promise<McpToolDefinition[]> {
+    try {
+      const proxy = this.proxies.get(mcpId);
+      if (!proxy || !proxy.available) return [];
+      return await proxy.listTools();
+    } catch {
+      return [];
     }
   }
 

@@ -16,7 +16,7 @@ interface JsonRpcResponse {
   error?: { code: number; message: string; data?: unknown };
 }
 
-interface McpToolDefinition {
+export interface McpToolDefinition {
   name: string;
   description?: string;
   inputSchema: Record<string, unknown>;

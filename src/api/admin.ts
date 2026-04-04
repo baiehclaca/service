@@ -325,5 +325,16 @@ export function createAdminRouter(deps: {
     }
   });
 
+  /** GET /api/mcp-connections/:id/tools — A-MCP-UI-02 */
+  router.get('/api/mcp-connections/:id/tools', async (req: Request, res: Response) => {
+    if (!hub) {
+      res.json([]);
+      return;
+    }
+    const id = String(req.params.id);
+    const tools = await hub.getToolsForProxy(id);
+    res.json(tools.map(t => ({ name: t.name, description: t.description ?? '' })));
+  });
+
   return router;
 }

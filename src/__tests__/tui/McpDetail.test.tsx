@@ -16,12 +16,26 @@ const mockMcpData = {
   toolsAdded: 14,
 };
 
+const mockTools = [
+  { name: 'read_file', description: 'Read the contents of a file' },
+  { name: 'write_file', description: 'Write content to a file' },
+];
+
 const originalFetch = global.fetch;
 
 beforeEach(() => {
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ success: true }),
+  global.fetch = jest.fn().mockImplementation((url: unknown) => {
+    const urlStr = String(url);
+    if (urlStr.includes('/tools')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => [],
+      });
+    }
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
   });
 });
 
@@ -94,18 +108,51 @@ describe('McpDetail', () => {
     expect(frame).toContain('🟢');
   });
 
-  it('shows tool list placeholder message', async () => {
+  it('shows "No tools available" when tools list is empty', async () => {
     const onBack = jest.fn();
+
+    (global.fetch as jest.Mock).mockImplementation((url: unknown) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/tools')) {
+        return Promise.resolve({ ok: true, json: async () => [] });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+    });
 
     const { lastFrame } = render(
       React.createElement(McpDetail, { mcpId: 'mcp-1', mcpData: mockMcpData, onBack })
     );
 
-    await delay(50);
+    await delay(100);
 
     const frame = lastFrame()!;
-    expect(frame).toContain('Tools:');
-    expect(frame).toContain('Connect to MCP to see tools');
+    expect(frame).toContain('Tools (0):');
+    expect(frame).toContain('No tools available');
+  });
+
+  it('shows tool list with descriptions', async () => {
+    const onBack = jest.fn();
+
+    (global.fetch as jest.Mock).mockImplementation((url: unknown) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/tools')) {
+        return Promise.resolve({ ok: true, json: async () => mockTools });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+    });
+
+    const { lastFrame } = render(
+      React.createElement(McpDetail, { mcpId: 'mcp-1', mcpData: mockMcpData, onBack })
+    );
+
+    await delay(100);
+
+    const frame = lastFrame()!;
+    expect(frame).toContain('Tools (2):');
+    expect(frame).toContain('read_file');
+    expect(frame).toContain('Read the contents of a file');
+    expect(frame).toContain('write_file');
+    expect(frame).toContain('Write content to a file');
   });
 
   it('shows (none) when args are empty', async () => {
@@ -141,8 +188,10 @@ describe('McpDetail', () => {
     const onBack = jest.fn();
 
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'mcp-new', name: 'filesystem', toolsAdded: 14 }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => [] }) // initial tools fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) }) // DELETE
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'mcp-new', name: 'filesystem', toolsAdded: 14 }) }) // POST
+      .mockResolvedValueOnce({ ok: true, json: async () => [] }); // tools fetch after reconnect
 
     const { lastFrame, stdin } = render(
       React.createElement(McpDetail, { mcpId: 'mcp-1', mcpData: mockMcpData, onBack })
@@ -188,10 +237,9 @@ describe('McpDetail', () => {
   it('removes MCP when x then y is pressed and calls onBack', async () => {
     const onBack = jest.fn();
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true }),
-    });
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] }) // tools fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) }); // DELETE
 
     const { stdin } = render(
       React.createElement(McpDetail, { mcpId: 'mcp-1', mcpData: mockMcpData, onBack })
@@ -277,12 +325,14 @@ describe('McpDetail', () => {
     const onBack = jest.fn();
 
     // Delay the DELETE response so we can see the 'connecting' state
-    (global.fetch as jest.Mock).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        ok: true,
-        json: async () => ({ success: true }),
-      }), 500))
-    );
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] }) // tools fetch
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(() => resolve({
+          ok: true,
+          json: async () => ({ success: true }),
+        }), 500))
+      );
 
     const { lastFrame, stdin } = render(
       React.createElement(McpDetail, { mcpId: 'mcp-1', mcpData: mockMcpData, onBack })

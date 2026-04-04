@@ -15,6 +15,11 @@ export interface McpDetailData {
   toolsAdded?: number;
 }
 
+interface McpTool {
+  name: string;
+  description: string;
+}
+
 interface McpDetailProps {
   mcpId: string;
   mcpData: McpDetailData;
@@ -36,11 +41,64 @@ function statusBadge(status: string): { icon: string; color: string } {
   }
 }
 
+/** Scrollable tool list component */
+function ToolList({ tools, loading }: { tools: McpTool[]; loading: boolean }): React.ReactElement {
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const VISIBLE_ROWS = 6;
+
+  useInput((input) => {
+    if (input === 'j') {
+      setScrollOffset((prev) => Math.min(prev + 1, Math.max(0, tools.length - VISIBLE_ROWS)));
+    }
+    if (input === 'k') {
+      setScrollOffset((prev) => Math.max(prev - 1, 0));
+    }
+  });
+
+  if (loading) {
+    return (
+      <Box flexDirection="column" marginTop={1}>
+        <Text dimColor bold>Tools:</Text>
+        <Box borderStyle="single" borderColor="gray" flexDirection="column" paddingX={1}>
+          <Text dimColor>Loading tools...</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  const visibleTools = tools.slice(scrollOffset, scrollOffset + VISIBLE_ROWS);
+  const canScrollDown = scrollOffset + VISIBLE_ROWS < tools.length;
+  const canScrollUp = scrollOffset > 0;
+
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text dimColor bold>Tools ({tools.length}):</Text>
+      <Box borderStyle="single" borderColor="gray" flexDirection="column" paddingX={1}>
+        {tools.length === 0 ? (
+          <Text dimColor>No tools available</Text>
+        ) : (
+          <>
+            {canScrollUp && <Text dimColor>↑ scroll up (k)</Text>}
+            {visibleTools.map((tool) => (
+              <Box key={tool.name} flexDirection="column" marginBottom={0}>
+                <Text bold>{tool.name}</Text>
+                {tool.description ? (
+                  <Text dimColor>  {tool.description}</Text>
+                ) : null}
+              </Box>
+            ))}
+            {canScrollDown && <Text dimColor>↓ scroll down (j)</Text>}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
 /**
  * Detail view for a single MCP connection.
- * Shows: name, full command + args, status, connected_at.
- * Scrollable tool list (if tools API is available) or placeholder.
- * Keybindings: r=reconnect, x=remove, Escape=back.
+ * Shows: name, full command + args, status, connected_at, and tool list.
+ * Keybindings: r=reconnect, x=remove, j/k=scroll tools, Escape=back.
  */
 export function McpDetail({
   mcpId,
@@ -52,6 +110,8 @@ export function McpDetail({
   const [currentId, setCurrentId] = useState<string>(mcpId);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [tools, setTools] = useState<McpTool[]>([]);
+  const [toolsLoading, setToolsLoading] = useState(true);
 
   // Clear action message after a short time
   useEffect(() => {
@@ -60,6 +120,29 @@ export function McpDetail({
       return () => clearTimeout(timer);
     }
   }, [actionMessage]);
+
+  // Fetch tools for the current MCP connection
+  const fetchTools = useCallback(async (id: string) => {
+    setToolsLoading(true);
+    try {
+      const resp = await fetch(`${BASE_URL}/api/mcp-connections/${id}/tools`);
+      if (resp.ok) {
+        const toolList = (await resp.json()) as McpTool[];
+        setTools(toolList);
+      } else {
+        setTools([]);
+      }
+    } catch {
+      setTools([]);
+    } finally {
+      setToolsLoading(false);
+    }
+  }, []);
+
+  // Initial tools fetch
+  useEffect(() => {
+    fetchTools(currentId);
+  }, [currentId, fetchTools]);
 
   // Reconnect: DELETE then POST with same config
   const reconnectMcp = useCallback(async () => {
@@ -184,23 +267,13 @@ export function McpDetail({
         <Text>{data.created_at}</Text>
       </Box>
 
-      {/* Tool list — no API exists to fetch tools, show placeholder */}
-      <Box marginTop={1} flexDirection="column">
-        <Text dimColor bold>Tools:</Text>
-        <Box
-          borderStyle="single"
-          borderColor="gray"
-          flexDirection="column"
-          paddingX={1}
-        >
-          <Text dimColor>Connect to MCP to see tools</Text>
-        </Box>
-      </Box>
+      {/* Tool list */}
+      <ToolList tools={tools} loading={toolsLoading} />
 
       {/* Footer */}
       <Box marginTop={1}>
         <Text dimColor>
-          r:reconnect  x:remove  Esc:back
+          r:reconnect  x:remove  j/k:scroll  Esc:back
         </Text>
       </Box>
     </Box>
