@@ -86,6 +86,21 @@ export function createAdminRouter(deps: {
     res.json(notifications);
   });
 
+  /** GET /api/notifications/search — FTS5 search */
+  router.get('/api/notifications/search', (req: Request, res: Response) => {
+    const query = typeof req.query.q === 'string' ? req.query.q : '';
+    const limitParam = typeof req.query.limit === 'string' ? req.query.limit : '50';
+    const limit = parseInt(limitParam, 10) || 50;
+
+    if (!query.trim()) {
+      res.json([]);
+      return;
+    }
+
+    const results = store.search(query, limit);
+    res.json(results);
+  });
+
   /** PATCH /api/notifications/:id/read — A-API-06 */
   router.patch('/api/notifications/:id/read', (req: Request, res: Response) => {
     const id = String(req.params.id);
@@ -95,6 +110,12 @@ export function createAdminRouter(deps: {
     } else {
       res.status(404).json({ error: 'Notification not found' });
     }
+  });
+
+  /** POST /api/notifications/mark-all-read — mark all notifications as read */
+  router.post('/api/notifications/mark-all-read', (_req: Request, res: Response) => {
+    store.markAllRead();
+    res.json({ success: true });
   });
 
   // ─── Integration Types ─────────────────────────────

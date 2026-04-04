@@ -1,22 +1,23 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Box, useApp, useInput } from 'ink';
 import { TitleBar } from './components/TitleBar.js';
 import { StatusBar } from './components/StatusBar.js';
 import { HelpOverlay } from './components/HelpOverlay.js';
 import { DaemonOffline } from './screens/DaemonOffline.js';
 import { Dashboard } from './screens/Dashboard.js';
+import { NotificationList } from './screens/NotificationList.js';
+import { NotificationDetail } from './screens/NotificationDetail.js';
 import { useApi } from './hooks/useApi.js';
+import { useSse } from './hooks/useSse.js';
+import type { NotificationItem } from './screens/NotificationList.js';
+import type { NotificationDetailItem } from './screens/NotificationDetail.js';
 
-type Screen = 'dashboard' | 'offline';
+type Screen = 'dashboard' | 'offline' | 'notifications' | 'notification-detail';
 
 interface StatusData {
   version: string;
   uptime: number;
   activeSseConnections: number;
-}
-
-interface NotificationItem {
-  read: number;
 }
 
 const PANE_COUNT = 4;
@@ -31,6 +32,7 @@ export function App(): React.ReactElement {
   const [screen, setScreen] = useState<Screen>('dashboard');
   const [activePane, setActivePane] = useState(0);
   const [helpVisible, setHelpVisible] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<NotificationDetailItem | null>(null);
 
   // Check daemon health
   const { data: statusData, error: statusError } = useApi<StatusData>('/api/status', 5000);
@@ -38,14 +40,41 @@ export function App(): React.ReactElement {
   // Get unread count from notifications
   const { data: notifData } = useApi<NotificationItem[]>('/api/notifications?limit=100', 5000);
 
+  // SSE connection for real-time updates
+  const { events: sseEvents } = useSse();
+
+  // Extract notification items from SSE events
+  const sseNotifications = useMemo<NotificationItem[]>(() => {
+    return sseEvents
+      .filter((e) => e.type === 'notification' && e.data && typeof e.data.id === 'string')
+      .map((e) => ({
+        id: e.data.id as string,
+        source: (e.data.source as string) || 'unknown',
+        type: (e.data.type as string) || 'notification',
+        title: (e.data.title as string) || 'Untitled',
+        body: (e.data.body as string) || '',
+        read: (e.data.read as number) ?? 0,
+        created_at: (e.data.created_at as string) || new Date().toISOString(),
+        metadata: (e.data.metadata as string) ?? null,
+      }));
+  }, [sseEvents]);
+
+  // Compute unread count: from API data + SSE new items
+  const unreadCount = useMemo(() => {
+    const apiUnread = notifData ? notifData.filter((n) => !n.read).length : 0;
+    const sseUnread = sseNotifications.filter((n) => !n.read).length;
+    // Avoid double-counting by using API data primarily, SSE items may overlap
+    return apiUnread + sseUnread;
+  }, [notifData, sseNotifications]);
+
   // Detect daemon online/offline
   useEffect(() => {
     if (statusError === 'ECONNREFUSED') {
       setScreen('offline');
-    } else if (statusData) {
+    } else if (statusData && screen === 'offline') {
       setScreen('dashboard');
     }
-  }, [statusData, statusError]);
+  }, [statusData, statusError, screen]);
 
   // Format uptime
   const formatUptime = useCallback((): string => {
@@ -59,10 +88,34 @@ export function App(): React.ReactElement {
     return `${secs}s`;
   }, [statusData]);
 
-  // Keyboard handling
+  // Navigate to notification list from dashboard
+  const handleNavigateToNotifications = useCallback(() => {
+    setScreen('notifications');
+  }, []);
+
+  // Navigate to notification detail
+  const handleSelectNotification = useCallback((notification: NotificationItem) => {
+    setSelectedNotification(notification);
+    setScreen('notification-detail');
+  }, []);
+
+  // Back from notification detail to list
+  const handleBackFromDetail = useCallback((updated?: NotificationDetailItem) => {
+    if (updated) {
+      setSelectedNotification(updated);
+    }
+    setScreen('notifications');
+  }, []);
+
+  // Back from notification list to dashboard
+  const handleBackFromList = useCallback(() => {
+    setScreen('dashboard');
+  }, []);
+
+  // Keyboard handling — only active on dashboard / help screens
   useInput((input, key) => {
-    // Help overlay toggle
-    if (input === '?') {
+    // Help overlay toggle (works from any screen)
+    if (input === '?' && screen === 'dashboard') {
       setHelpVisible((v) => !v);
       return;
     }
@@ -75,6 +128,9 @@ export function App(): React.ReactElement {
 
     // Don't process other keys when help is showing
     if (helpVisible) return;
+
+    // Don't handle q / Tab when in sub-screens (they have their own input)
+    if (screen !== 'dashboard' && screen !== 'offline') return;
 
     // Quit
     if (input === 'q') {
@@ -122,22 +178,50 @@ export function App(): React.ReactElement {
   }, []);
 
   const version = statusData?.version ?? '1.0.1';
-  const daemonOnline = screen === 'dashboard' && !statusError;
-  const unreadCount = notifData ? notifData.filter((n) => !n.read).length : 0;
+  const daemonOnline = !statusError && statusData !== null;
 
   const rows = process.stdout.rows ?? 24;
+
+  const renderScreen = (): React.ReactElement => {
+    if (helpVisible) {
+      return <HelpOverlay visible={true} />;
+    }
+    switch (screen) {
+      case 'offline':
+        return <DaemonOffline />;
+      case 'notifications':
+        return (
+          <NotificationList
+            onBack={handleBackFromList}
+            onSelect={handleSelectNotification}
+            sseNotifications={sseNotifications}
+          />
+        );
+      case 'notification-detail':
+        return selectedNotification ? (
+          <NotificationDetail
+            notification={selectedNotification}
+            onBack={handleBackFromDetail}
+          />
+        ) : (
+          <DaemonOffline />
+        );
+      case 'dashboard':
+      default:
+        return (
+          <Dashboard
+            activePane={activePane}
+            onNavigateToNotifications={handleNavigateToNotifications}
+          />
+        );
+    }
+  };
 
   return (
     <Box flexDirection="column" height={rows}>
       <TitleBar version={version} daemonOnline={daemonOnline} />
       <Box flexGrow={1} flexDirection="column">
-        {helpVisible ? (
-          <HelpOverlay visible={true} />
-        ) : screen === 'offline' ? (
-          <DaemonOffline />
-        ) : (
-          <Dashboard activePane={activePane} />
-        )}
+        {renderScreen()}
       </Box>
       <StatusBar
         unreadCount={unreadCount}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import { useApi } from '../hooks/useApi.js';
 
 const PANES = ['Live Feed', 'Integrations', 'MCPs', 'System'] as const;
@@ -13,6 +13,7 @@ const PANE_COLORS: Record<string, string> = {
 
 interface DashboardProps {
   activePane: number;
+  onNavigateToNotifications?: () => void;
 }
 
 interface Notification {
@@ -49,11 +50,21 @@ interface StatusData {
  * Tab cycles panes; active pane has highlighted border.
  * Each pane shows summary data from API.
  */
-export function Dashboard({ activePane }: DashboardProps): React.ReactElement {
+export function Dashboard({ activePane, onNavigateToNotifications }: DashboardProps): React.ReactElement {
   const { data: notifications } = useApi<Notification[]>('/api/notifications?limit=10', 5000);
   const { data: integrations } = useApi<Integration[]>('/api/integrations', 10000);
   const { data: mcps } = useApi<McpConnection[]>('/api/mcp-connections', 10000);
   const { data: status } = useApi<StatusData>('/api/status', 5000);
+
+  // Handle Enter key to navigate into active pane
+  useInput((_input, key) => {
+    if (key.return) {
+      const pane = PANES[activePane];
+      if (pane === 'Live Feed' && onNavigateToNotifications) {
+        onNavigateToNotifications();
+      }
+    }
+  });
 
   const renderPane = (index: number): React.ReactElement => {
     const pane = PANES[index]!;

@@ -101,6 +101,11 @@ export class NotificationStore {
     return result.changes > 0;
   }
 
+  /** Mark all notifications as read */
+  markAllRead(): void {
+    this.db.prepare('UPDATE notifications SET read = 1 WHERE read = 0').run();
+  }
+
   /** Get count of unread notifications */
   getUnreadCount(source?: string): number {
     let sql = 'SELECT COUNT(*) as count FROM notifications WHERE read = 0';
