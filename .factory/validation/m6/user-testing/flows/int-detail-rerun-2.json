@@ -1,0 +1,44 @@
+{
+  "groupId": "int-detail-rerun-2",
+  "testedAt": "2026-04-04T21:16:26Z",
+  "isolation": {
+    "surface": "integration-manager (tuistory)",
+    "adminApi": "http://127.0.0.1:3334",
+    "missionDir": "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b",
+    "evidenceDir": "/Users/teodorwaltervido/.factory/missions/aba4091c-f606-4117-af40-1e9c221d196b/evidence/m6/int-detail-rerun-2"
+  },
+  "toolsUsed": [
+    "tuistory",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "A-INT-UI-03",
+      "status": "pass",
+      "reason": "Integration detail view rendered required fields (type, status, created_at, last_event_at), config secret values were redacted as \u2022\u2022\u2022\u2022\u2022\u2022 in TUI, and Escape returned to the integrations list.",
+      "evidence": [
+        "m6/int-detail-rerun-2/api-integrations-before.json",
+        "m6/int-detail-rerun-2/02-after-tab.txt",
+        "m6/int-detail-rerun-2/02-after-tab.png",
+        "m6/int-detail-rerun-2/04-after-second-enter.txt",
+        "m6/int-detail-rerun-2/04-after-second-enter.png",
+        "m6/int-detail-rerun-2/05-after-esc-back.txt",
+        "m6/int-detail-rerun-2/05-after-esc-back.png",
+        "m6/int-detail-rerun-2/api-integration-detail-headers.txt",
+        "m6/int-detail-rerun-2/api-integration-detail-body.txt"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "From the 4-pane dashboard, first Enter switched to the dedicated Integrations screen; a second Enter on the selected row opened Integration Detail.",
+      "resolved": true,
+      "resolution": "Continued sequential navigation and validated A-INT-UI-03 at the Integration Detail screen.",
+      "affectedAssertions": [
+        "A-INT-UI-03"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Retested A-INT-UI-03 and it now passes with required detail fields, masked secret display, and Escape-back behavior confirmed."
+}

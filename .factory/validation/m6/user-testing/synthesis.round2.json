@@ -1,0 +1,21 @@
+{
+  "milestone": "m6",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [
+    {
+      "id": "A-INT-UI-03",
+      "reason": "From Integrations pane, Enter opened an \"HTTP 404\" screen instead of integration detail fields (type, status, created_at, last_event_at, redacted config). Escape returned to the integrations list."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/m6/user-testing/synthesis.round1.json"
+}
