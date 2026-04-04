@@ -89,7 +89,7 @@ export class PushManager {
 
   /** Shut down: close all connections */
   shutdown(): void {
-    for (const [id, conn] of this.connections) {
+    for (const conn of this.connections.values()) {
       clearInterval(conn.heartbeatTimer);
       try {
         conn.res.end();

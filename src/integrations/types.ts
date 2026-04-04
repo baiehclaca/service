@@ -1,4 +1,3 @@
-import type { EventEmitter } from 'node:events';
 
 /**
  * JSON Schema Draft 7 type for integration config schemas.

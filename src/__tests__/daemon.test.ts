@@ -1,7 +1,5 @@
 import { DaemonManager } from '../daemon/manager.js';
-import { writeFileSync, unlinkSync, mkdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { existsSync } from 'node:fs';
 
 describe('DaemonManager', () => {
   it('should ensure service directory exists', () => {

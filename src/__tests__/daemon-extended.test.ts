@@ -1,7 +1,7 @@
 import { DaemonManager } from '../daemon/manager.js';
-import { existsSync, readFileSync, unlinkSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir, homedir } from 'node:os';
+import { homedir } from 'node:os';
 
 describe('DaemonManager extended', () => {
   const SERVICE_DIR = join(homedir(), '.service');

@@ -1,5 +1,4 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 
 /** JSON-RPC 2.0 message types */
@@ -221,7 +220,7 @@ export class StdioMcpProxy extends EventEmitter {
 
   /** Reject all pending requests */
   private rejectAllPending(error: Error): void {
-    for (const [id, pending] of this.pendingRequests) {
+    for (const pending of this.pendingRequests.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
     }

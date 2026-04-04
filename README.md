@@ -13,7 +13,7 @@
 [![npm version](https://img.shields.io/npm/v/service-mcp?style=flat-square&color=CB3837&logo=npm)](https://www.npmjs.com/package/service-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
-[![GitHub CI](https://img.shields.io/github/actions/workflow/status/baiehclaca/service-mcp/ci.yml?style=flat-square&logo=github)](https://github.com/baiehclaca/service-mcp/actions)
+[![GitHub CI](https://img.shields.io/github/actions/workflow/status/baiehclaca/service/ci.yml?style=flat-square&logo=github)](https://github.com/baiehclaca/service/actions)
 
 **The only MCP server your AI agent needs.**
 

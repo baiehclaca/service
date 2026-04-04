@@ -2,7 +2,6 @@ import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from '
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { execSync } from 'node:child_process';
-import { ServiceError } from '../utils/errors.js';
 
 const SERVICE_DIR = join(homedir(), '.service');
 const PID_FILE = join(SERVICE_DIR, 'service.pid');

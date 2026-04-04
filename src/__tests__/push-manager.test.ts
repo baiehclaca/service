@@ -135,7 +135,7 @@ describe('PushManager', () => {
   it('should remove connection on close event', () => {
     const res = new MockResponse();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const id = pushManager.addConnection(res as any);
+    pushManager.addConnection(res as any);
 
     expect(pushManager.getConnectionCount()).toBe(1);
     res.emit('close');

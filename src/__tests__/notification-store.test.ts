@@ -1,6 +1,6 @@
 import { ServiceDatabase } from '../db/database.js';
 import { NotificationStore } from '../gateway/notification-store.js';
-import { mkdirSync, unlinkSync, existsSync } from 'node:fs';
+import { mkdirSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';

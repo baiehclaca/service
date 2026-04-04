@@ -214,7 +214,7 @@ export class McpHub {
         }
 
         await transport.handleRequest(mcpReq, res, req.body);
-      } catch (error) {
+      } catch {
         if (!res.headersSent) {
           res.status(500).json({
             jsonrpc: '2.0',

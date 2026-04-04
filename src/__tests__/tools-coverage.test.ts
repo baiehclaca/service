@@ -1,8 +1,6 @@
 import { jest } from '@jest/globals';
 import { McpHub } from '../server/mcp-hub.js';
-import { MemoryTools } from '../tools/memory-tools.js';
 import { McpManagementTools } from '../tools/mcp-management-tools.js';
-import { SearchTools } from '../tools/search-tools.js';
 import { StatusTools } from '../tools/status-tools.js';
 import { HelpTools } from '../tools/help-tools.js';
 import { PlatformToolsManager } from '../tools/platform-tools.js';
@@ -564,7 +562,7 @@ describe('McpHub — dynamic tools and addTool/removeTool', () => {
 
     // Creating an app and server should include the dynamic tool
     const app = hub.createApp();
-    const http = await import('node:http');
+    await import('node:http');
     const server = await new Promise<import('node:http').Server>((resolve) => {
       const s = app.listen(0, () => resolve(s));
     });

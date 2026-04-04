@@ -1,5 +1,4 @@
 import { StdioMcpProxy } from '../server/proxy.js';
-import { spawn } from 'node:child_process';
 
 describe('StdioMcpProxy extended coverage', () => {
   it('should mark as not available after disconnect', async () => {
