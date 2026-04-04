@@ -191,8 +191,7 @@ export function IntegrationAdd({ onBack }: IntegrationAddProps): React.ReactElem
         integrationName,
         fieldValues,
         fields,
-        handleSubmit,
-        onBack
+        handleSubmit
       );
 
     case 'submitting':
@@ -357,8 +356,7 @@ function renderReview(
   name: string,
   fieldValues: Record<string, string>,
   fields: Array<{ name: string; prop: JSONSchemaProperty; required: boolean }>,
-  onSubmit: () => void,
-  _onBack: () => void
+  onSubmit: () => void
 ): React.ReactElement {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
