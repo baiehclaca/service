@@ -81,6 +81,13 @@ export function createAdminRouter(deps: {
     const limit = parseInt(limitParam, 10) || 50;
     const source = typeof req.query.source === 'string' ? req.query.source : undefined;
     const unread = req.query.unread === 'true';
+    const searchParam = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+
+    if (searchParam) {
+      const results = store.search(searchParam, limit);
+      res.json(results);
+      return;
+    }
 
     const notifications = store.getRecent(limit, source, unread || undefined);
     res.json(notifications);

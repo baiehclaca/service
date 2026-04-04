@@ -59,12 +59,24 @@ export function App(): React.ReactElement {
       }));
   }, [sseEvents]);
 
-  // Compute unread count: from API data + SSE new items
+  // Compute unread count using a deduplicated Set of unread IDs.
+  // API data is the source of truth; SSE items only contribute if their ID
+  // is not already present in the API list, preventing double-counting after
+  // mark-all-read and when SSE echoes notifications already fetched.
   const unreadCount = useMemo(() => {
-    const apiUnread = notifData ? notifData.filter((n) => !n.read).length : 0;
-    const sseUnread = sseNotifications.filter((n) => !n.read).length;
-    // Avoid double-counting by using API data primarily, SSE items may overlap
-    return apiUnread + sseUnread;
+    const unreadIds = new Set<string>();
+    if (notifData) {
+      for (const n of notifData) {
+        if (!n.read) unreadIds.add(n.id);
+      }
+    }
+    const apiIds = new Set(notifData ? notifData.map((n) => n.id) : []);
+    for (const n of sseNotifications) {
+      if (!n.read && !apiIds.has(n.id)) {
+        unreadIds.add(n.id);
+      }
+    }
+    return unreadIds.size;
   }, [notifData, sseNotifications]);
 
   // Detect daemon online/offline

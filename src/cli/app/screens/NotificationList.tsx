@@ -48,7 +48,7 @@ export function NotificationList({
     try {
       let url: string;
       if (searchQuery) {
-        url = `${BASE_URL}/api/notifications/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
+        url = `${BASE_URL}/api/notifications?search=${encodeURIComponent(searchQuery)}&limit=50`;
       } else if (unreadOnly) {
         url = `${BASE_URL}/api/notifications?limit=50&unread=true`;
       } else {
