@@ -76,6 +76,11 @@ export class StdioMcpProxy extends EventEmitter {
         this.emit('stderr', chunk.toString());
       });
 
+      // Suppress unhandled 'error' events on stdin (e.g. EPIPE when the child
+      // process exits before we finish writing). Errors will surface via the
+      // child-process 'error' / 'exit' events instead.
+      this.process.stdin?.on('error', () => { /* handled via process events */ });
+
       this.process.on('exit', (code, signal) => {
         this._available = false;
         this.rejectAllPending(new Error(`Process exited: code=${code} signal=${signal}`));
@@ -88,7 +93,11 @@ export class StdioMcpProxy extends EventEmitter {
       this.process.on('error', (err: Error) => {
         this._available = false;
         this.rejectAllPending(err);
-        this.emit('error', err);
+        // Only emit 'error' if there are listeners — otherwise Node.js will throw
+        // an uncaught exception and crash the daemon.
+        if (this.listenerCount('error') > 0) {
+          this.emit('error', err);
+        }
         if (!this._destroyed) {
           this.scheduleRetry();
         }
@@ -116,7 +125,11 @@ export class StdioMcpProxy extends EventEmitter {
       this.emit('connected', this.tools);
     } catch (error) {
       this._available = false;
-      this.emit('error', error);
+      // Only emit 'error' if there are listeners — otherwise Node.js will throw
+      // an uncaught exception and crash the daemon.
+      if (this.listenerCount('error') > 0) {
+        this.emit('error', error);
+      }
       if (!this._destroyed) {
         this.scheduleRetry();
       }
@@ -239,6 +252,9 @@ export class StdioMcpProxy extends EventEmitter {
         });
       }
     }, delay);
+    // Unref the timer so it doesn't prevent the Node.js event loop from exiting
+    // when the process is done with its main work (e.g. during tests).
+    this.retryTimer.unref();
   }
 
   /** Disconnect and clean up */
