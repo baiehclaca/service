@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import chalk from 'chalk';
+import ora from 'ora';
 import { DaemonManager } from '../daemon/manager.js';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +9,21 @@ import { dirname, join } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+/** Poll a URL until it returns ok or timeout (ms) is exceeded */
+async function pollHealth(url: string, timeoutMs: number): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const resp = await fetch(url);
+      if (resp.ok) return true;
+    } catch {
+      // ignore — daemon not ready yet
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  return false;
+}
 
 const program = new Command();
 
@@ -28,7 +44,7 @@ program
       return;
     }
 
-    console.log(chalk.blue('Starting SERVICE daemon...'));
+    const spinner = ora('Starting SERVICE daemon...').start();
 
     const mainPath = join(__dirname, '..', 'main.js');
 
@@ -41,11 +57,19 @@ program
 
     if (child.pid) {
       DaemonManager.writePid(child.pid);
-      console.log(chalk.green(`SERVICE daemon started (PID ${child.pid}).`));
+
+      // Poll health endpoint until ready (up to 10s)
+      const healthy = await pollHealth('http://127.0.0.1:3334/health', 10000);
+
+      if (healthy) {
+        spinner.succeed('SERVICE started on ports 3333/3334');
+      } else {
+        spinner.warn(`SERVICE daemon started (PID ${child.pid}) but health check not yet responding`);
+      }
       console.log(chalk.gray(`  MCP Hub: http://localhost:3333/mcp`));
       console.log(chalk.gray(`  Admin:   http://localhost:3334`));
     } else {
-      console.error(chalk.red('Failed to start SERVICE daemon.'));
+      spinner.fail('Failed to start SERVICE daemon.');
       process.exit(1);
     }
   });
@@ -54,11 +78,12 @@ program
   .command('stop')
   .description('Stop the SERVICE daemon')
   .action(() => {
+    const spinner = ora('Stopping...').start();
     const result = DaemonManager.stop();
     if (result.stopped) {
-      console.log(chalk.green(result.message));
+      spinner.succeed('Stopped');
     } else {
-      console.log(chalk.yellow(result.message));
+      spinner.info(result.message);
     }
   });
 
@@ -66,7 +91,10 @@ program
   .command('status')
   .description('Show the SERVICE daemon status')
   .action(() => {
+    const spinner = ora('Checking status...').start();
     const result = DaemonManager.status();
+    spinner.stop();
+
     if (result.running) {
       console.log(chalk.green(`● SERVICE daemon is running`));
       console.log(chalk.gray(`  Status:              Running (PID: ${result.pid})`));
@@ -174,6 +202,7 @@ integration
 
       // Determine the type
       let selectedType: typeof types[0] | undefined;
+      let introShown = false;
       if (type) {
         selectedType = types.find((t) => t.type === type);
         if (!selectedType) {
@@ -192,6 +221,7 @@ integration
         }));
         const selected = await selectIntegrationType(typeInfoList);
         selectedType = types.find((t) => t.type === selected.type);
+        introShown = true;
       }
 
       if (!selectedType) {
@@ -216,7 +246,7 @@ integration
         config = { name: opts.name };
       } else {
         // Interactive wizard
-        const { runIntegrationWizard, promptIntegrationName } = await import('./wizard.js');
+        const { runIntegrationWizard, promptIntegrationName, startConnectionSpinner, wizardConnectionSuccess, wizardConnectionFailure } = await import('./wizard.js');
         const wizardTypeInfo = {
           type: selectedType.type,
           name: selectedType.name,
@@ -224,14 +254,43 @@ integration
           configSchema: selectedType.configSchema as unknown as import('../integrations/types.js').JSONSchema,
         };
         name = await promptIntegrationName(`My ${selectedType.name}`);
-        config = await runIntegrationWizard(wizardTypeInfo);
+        config = await runIntegrationWizard(wizardTypeInfo, undefined, !introShown);
+
+        // Connection test with spinner
+        const connSpinner = startConnectionSpinner();
+        const integrationName = name || config.name || `${selectedType.type}-${Date.now()}`;
+        const createResp = await fetch('http://localhost:3334/api/integrations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: selectedType.type,
+            name: integrationName,
+            config,
+          }),
+        });
+
+        if (!createResp.ok) {
+          const err = (await createResp.json()) as { error: string };
+          connSpinner.error('Connection failed');
+          wizardConnectionFailure(err.error);
+          process.exit(1);
+        }
+
+        const result = (await createResp.json()) as { id: string; name: string; type: string };
+        connSpinner.stop('Connection successful');
+        wizardConnectionSuccess();
+        console.log(chalk.gray(`  ID: ${result.id}`));
+        if (selectedType.type === 'webhook') {
+          console.log(chalk.gray(`  Webhook URL: http://localhost:3334/webhooks/${result.id}`));
+        }
+        return;
       }
 
       if (!name) {
         name = config.name || `${selectedType.type}-${Date.now()}`;
       }
 
-      // Create via API
+      // Create via API (non-interactive path)
       const createResp = await fetch('http://localhost:3334/api/integrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -384,24 +443,44 @@ mcp
   });
 
 mcp
-  .command('add <name> <command> [args...]')
-  .description('Register a new downstream MCP stdio server')
-  .action(async (name: string, command: string, args: string[]) => {
+  .command('add [name] [command] [args...]')
+  .description('Register a new downstream MCP stdio server (interactive wizard if no args)')
+  .action(async (name?: string, command?: string, args?: string[]) => {
     try {
+      let mcpName: string;
+      let mcpCommand: string;
+      let mcpArgs: string[];
+
+      if (!name || !command) {
+        // Interactive wizard — no positional args provided
+        const { runMcpAddWizard } = await import('./wizard.js');
+        const result = await runMcpAddWizard();
+        mcpName = result.name;
+        mcpCommand = result.command;
+        mcpArgs = result.args;
+      } else {
+        // Positional form: mcp add <name> <command> [args...]
+        mcpName = name;
+        mcpCommand = command;
+        mcpArgs = args ?? [];
+      }
+
+      const spinner = ora('Connecting to MCP server...').start();
+
       const resp = await fetch('http://localhost:3334/api/mcp-connections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, command, args }),
+        body: JSON.stringify({ name: mcpName, command: mcpCommand, args: mcpArgs }),
       });
 
       if (!resp.ok) {
         const err = (await resp.json()) as { error: string };
-        console.error(chalk.red(`Failed to add MCP: ${err.error}`));
+        spinner.fail(`Failed to add MCP: ${err.error}`);
         process.exit(1);
       }
 
       const result = (await resp.json()) as { id: string; name: string; toolsAdded: number };
-      console.log(chalk.green(`✓ MCP '${result.name}' connected (${result.toolsAdded} tools available)`));
+      spinner.succeed(`MCP '${result.name}' connected (${result.toolsAdded} tools available)`);
       console.log(chalk.gray(`  ID: ${result.id}`));
     } catch {
       console.error(chalk.red('Cannot connect to admin API. Is the daemon running?'));
