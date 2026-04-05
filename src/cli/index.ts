@@ -120,6 +120,17 @@ program
     }
   });
 
+// ─── Setup wizard ───────────────────────────────────────
+
+program
+  .command('setup')
+  .alias('init')
+  .description('Interactive setup wizard for first-time configuration')
+  .action(async () => {
+    const { runSetupWizard } = await import('./setup.js');
+    await runSetupWizard();
+  });
+
 // ─── Integration management ─────────────────────────────
 
 const integration = program
