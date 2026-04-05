@@ -131,7 +131,7 @@ integration
   .description('List all configured integrations')
   .action(async () => {
     try {
-      const resp = await fetch('http://localhost:3334/api/integrations');
+      const resp = await fetch('http://127.0.0.1:3334/api/integrations');
       if (!resp.ok) {
         console.error(chalk.red('Failed to fetch integrations. Is the daemon running?'));
         process.exit(1);
@@ -188,7 +188,7 @@ integration
   .action(async (type: string | undefined, opts: { name?: string; config?: string }) => {
     try {
       // Get available types
-      const typesResp = await fetch('http://localhost:3334/api/integrations/types');
+      const typesResp = await fetch('http://127.0.0.1:3334/api/integrations/types');
       if (!typesResp.ok) {
         console.error(chalk.red('Failed to fetch integration types. Is the daemon running?'));
         process.exit(1);
@@ -259,7 +259,7 @@ integration
         // Connection test with spinner
         const connSpinner = startConnectionSpinner();
         const integrationName = name || config.name || `${selectedType.type}-${Date.now()}`;
-        const createResp = await fetch('http://localhost:3334/api/integrations', {
+        const createResp = await fetch('http://127.0.0.1:3334/api/integrations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -291,7 +291,7 @@ integration
       }
 
       // Create via API (non-interactive path)
-      const createResp = await fetch('http://localhost:3334/api/integrations', {
+      const createResp = await fetch('http://127.0.0.1:3334/api/integrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -324,7 +324,7 @@ integration
   .description('Remove an integration by ID')
   .action(async (id: string) => {
     try {
-      const resp = await fetch(`http://localhost:3334/api/integrations/${id}`, {
+      const resp = await fetch(`http://127.0.0.1:3334/api/integrations/${id}`, {
         method: 'DELETE',
       });
 
@@ -346,7 +346,7 @@ integration
   .description('Enable a disabled integration')
   .action(async (id: string) => {
     try {
-      const resp = await fetch(`http://localhost:3334/api/integrations/${id}/enable`, {
+      const resp = await fetch(`http://127.0.0.1:3334/api/integrations/${id}/enable`, {
         method: 'POST',
       });
 
@@ -368,7 +368,7 @@ integration
   .description('Disable an integration without removing it')
   .action(async (id: string) => {
     try {
-      const resp = await fetch(`http://localhost:3334/api/integrations/${id}/disable`, {
+      const resp = await fetch(`http://127.0.0.1:3334/api/integrations/${id}/disable`, {
         method: 'POST',
       });
 
@@ -396,7 +396,7 @@ mcp
   .description('List all connected downstream MCP servers')
   .action(async () => {
     try {
-      const resp = await fetch('http://localhost:3334/api/mcp-connections');
+      const resp = await fetch('http://127.0.0.1:3334/api/mcp-connections');
       if (!resp.ok) {
         console.error(chalk.red('Failed to fetch MCP connections. Is the daemon running?'));
         process.exit(1);
@@ -467,7 +467,7 @@ mcp
 
       const spinner = ora('Connecting to MCP server...').start();
 
-      const resp = await fetch('http://localhost:3334/api/mcp-connections', {
+      const resp = await fetch('http://127.0.0.1:3334/api/mcp-connections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: mcpName, command: mcpCommand, args: mcpArgs }),
@@ -493,7 +493,7 @@ mcp
   .description('Disconnect and remove a downstream MCP')
   .action(async (id: string) => {
     try {
-      const resp = await fetch(`http://localhost:3334/api/mcp-connections/${id}`, {
+      const resp = await fetch(`http://127.0.0.1:3334/api/mcp-connections/${id}`, {
         method: 'DELETE',
       });
 
