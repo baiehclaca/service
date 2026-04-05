@@ -200,7 +200,7 @@ describe('McpDetail', () => {
     await delay(50);
 
     stdin.write('r');
-    await delay(200);
+    await delay(550);
 
     // Should have called DELETE then POST
     expect(global.fetch).toHaveBeenCalledWith(

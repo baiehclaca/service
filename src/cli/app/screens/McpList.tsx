@@ -3,6 +3,10 @@ import { Box, Text, useInput } from 'ink';
 import { ConfirmDialog } from '../components/ConfirmDialog.js';
 
 const BASE_URL = 'http://127.0.0.1:3334';
+const RECONNECT_MIN_CONNECTING_MS = 400;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface McpItem {
   id: string;
@@ -109,6 +113,8 @@ export function McpList({
 
   // Reconnect an MCP (DELETE then POST with same config)
   const reconnectMcp = useCallback(async (mcp: McpItem) => {
+    const reconnectStartedAt = Date.now();
+
     try {
       setMcps((prev) =>
         prev.map((m) => (m.id === mcp.id ? { ...m, status: 'connecting' } : m))
@@ -131,13 +137,16 @@ export function McpList({
 
       if (postResp.ok) {
         setActionMessage('Reconnected successfully');
-        fetchMcps();
       } else {
         setActionMessage('Failed to reconnect');
-        fetchMcps();
       }
     } catch {
       setActionMessage('Failed to reconnect');
+    } finally {
+      const elapsed = Date.now() - reconnectStartedAt;
+      if (elapsed < RECONNECT_MIN_CONNECTING_MS) {
+        await sleep(RECONNECT_MIN_CONNECTING_MS - elapsed);
+      }
       fetchMcps();
     }
   }, [fetchMcps]);

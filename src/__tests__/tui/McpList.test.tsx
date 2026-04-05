@@ -331,6 +331,36 @@ describe('McpList', () => {
     expect(frame).toContain('Reconnect');
   });
 
+  it('shows connecting status during reconnect', async () => {
+    const onBack = jest.fn();
+    const onSelect = jest.fn();
+    const onAdd = jest.fn();
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => mockMcps })
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(() => resolve({
+          ok: true,
+          json: async () => ({ success: true }),
+        }), 500))
+      )
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'mcp-new', name: 'filesystem', toolsAdded: 14 }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockMcps });
+
+    const { lastFrame, stdin } = render(
+      React.createElement(McpList, { onBack, onSelect, onAdd })
+    );
+
+    await delay(100);
+
+    stdin.write('r');
+    await delay(50);
+
+    const frame = lastFrame()!;
+    expect(frame).toContain('connecting');
+    expect(frame).toContain('Reconnecting');
+  });
+
   it('shows keyboard hints in footer', async () => {
     const onBack = jest.fn();
     const onSelect = jest.fn();

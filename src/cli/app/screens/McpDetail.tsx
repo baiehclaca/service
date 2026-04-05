@@ -3,6 +3,10 @@ import { Box, Text, useInput } from 'ink';
 import { ConfirmDialog } from '../components/ConfirmDialog.js';
 
 const BASE_URL = 'http://127.0.0.1:3334';
+const RECONNECT_MIN_CONNECTING_MS = 400;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface McpDetailData {
   id: string;
@@ -146,12 +150,15 @@ export function McpDetail({
 
   // Reconnect: DELETE then POST with same config
   const reconnectMcp = useCallback(async () => {
+    const reconnectStartedAt = Date.now();
+
     try {
       setData((prev) => ({ ...prev, status: 'connecting' }));
       setActionMessage('Reconnecting...');
 
       const delResp = await fetch(`${BASE_URL}/api/mcp-connections/${currentId}`, { method: 'DELETE' });
       if (!delResp.ok) {
+        setData((prev) => ({ ...prev, status: 'error' }));
         setActionMessage('Failed to reconnect');
         return;
       }
@@ -164,6 +171,11 @@ export function McpDetail({
 
       if (postResp.ok) {
         const result = (await postResp.json()) as { id: string; name: string; toolsAdded?: number };
+        const elapsed = Date.now() - reconnectStartedAt;
+        if (elapsed < RECONNECT_MIN_CONNECTING_MS) {
+          await sleep(RECONNECT_MIN_CONNECTING_MS - elapsed);
+        }
+
         setCurrentId(result.id);
         setData((prev) => ({ ...prev, id: result.id, status: 'active', toolsAdded: result.toolsAdded }));
         setActionMessage('Reconnected successfully');
