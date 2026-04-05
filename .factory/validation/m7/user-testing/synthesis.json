@@ -1,19 +1,26 @@
 {
   "milestone": "m7",
-  "round": 3,
-  "status": "pass",
+  "round": 4,
+  "status": "fail",
   "assertionsSummary": {
-    "total": 2,
-    "passed": 2,
-    "failed": 0,
+    "total": 5,
+    "passed": 4,
+    "failed": 1,
     "blocked": 0
   },
   "passedAssertions": [
-    "A-MCP-UI-04",
-    "A-MCP-UI-05"
+    "A-MCP-UI-01",
+    "A-MCP-UI-02",
+    "A-MCP-UI-03",
+    "A-MCP-UI-04"
   ],
-  "failedAssertions": [],
+  "failedAssertions": [
+    {
+      "id": "A-MCP-UI-05",
+      "reason": "Round5 evidence showed reconnect success toast and ID rotation but no observable status=error precondition in list and no visible interim connecting state after pressing r; follow-up focused run was blocked by admin API outages/timeouts, so the connecting-transition requirement could not be reliably confirmed."
+    }
+  ],
   "blockedAssertions": [],
   "appliedUpdates": [],
-  "previousRound": ".factory/validation/m7/user-testing/synthesis.round2.json"
+  "previousRound": ".factory/validation/m7/user-testing/synthesis.round3.json"
 }
