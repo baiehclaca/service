@@ -5,6 +5,16 @@ All notable changes to SERVICE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-05
+
+### Added
+- Interactive setup/onboarding wizard (`service setup` / `service init`)
+  - Step-by-step first-run configuration with @clack/prompts
+  - Auto-starts daemon with health polling
+  - Connect MCP servers interactively with tool count feedback
+  - Add notification integrations with schema-driven prompts
+  - Summary screen with next-steps guidance
+
 ## [1.1.0] — 2026-04-05
 
 ### Added
