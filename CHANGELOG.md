@@ -5,6 +5,54 @@ All notable changes to SERVICE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-04-05
+
+### Added
+
+- **Ink v6 TUI Dashboard**: Replaced the legacy `blessed` dashboard with a fully interactive, keyboard-driven terminal UI built on Ink v6 (React for CLI) — the same framework powering Claude Code and Gemini CLI
+- **Full keyboard navigation**: Tab cycles panes, arrow keys / j/k navigate lists, Enter opens detail views, Escape goes back, `q` quits, `?` shows help overlay
+- **Notification Center**: Full notification management screen with:
+  - Navigable notification list with visual unread indicators (● unread / ○ read)
+  - Detail view showing full body, source, type, and timestamp
+  - Mark-as-read (Space) and mark-all-read (A)
+  - Filter unread only (`u` toggle)
+  - Inline full-text search (`/`) via FTS5
+  - Real-time SSE push — new notifications appear instantly without refresh
+- **Integration Manager**: Full integration management screen with:
+  - Color-coded status badges (🟢 active / 🔴 error / ⏸ disabled)
+  - Detail view with config fields (secrets redacted as ••••••)
+  - Enable/disable integrations (`e`/`d` keys)
+  - Remove with confirmation dialog (`x` key)
+  - In-TUI add form with type selection, schema-driven fields, and password masking for secret fields
+- **MCP Connection Manager**: Full MCP management screen with:
+  - Status badges (🟢 connected / 🔴 error / ⏳ connecting) and tool count display
+  - Detail view with full command, args, status, and scrollable tool list
+  - Add form for new MCP connections
+  - Remove with confirmation (`x` key)
+  - Reconnect disconnected MCPs (`r` key)
+- **@clack/prompts Wizards**: Rebuilt all standalone CLI wizards with @clack/prompts:
+  - Styled intro/outro banners
+  - Password masking for secret fields (api_key, api_secret, token, password, etc.)
+  - Review screen before submit (secrets redacted)
+  - Cancel handling (Ctrl+C exits cleanly with "Cancelled" message)
+  - Interactive `service mcp add` wizard (when run without arguments)
+- **Ora spinners**: Loading spinners on `service start`, `service stop`, and `service status` commands
+- **SSE real-time connection**: Dashboard subscribes to SSE event stream for live push updates instead of polling
+- **Help overlay**: `?` key shows full keyboard shortcut reference
+- **Status bar**: Bottom bar showing unread count, daemon uptime, and port numbers
+- **Daemon offline screen**: Clear "SERVICE is not running" screen when daemon is unreachable
+
+### Removed
+
+- **blessed**: Removed `blessed` and `@types/blessed` — fully replaced by Ink v6
+- **inquirer**: Removed `inquirer` — fully replaced by @clack/prompts
+
+### Changed
+
+- TUI dashboard now uses React/Ink component architecture with hooks (`useApi`, `useSse`, `useInput`)
+- All integration and MCP management can now be done entirely within the TUI dashboard
+- Wizard flows now use @clack/prompts' native password masking instead of plaintext input
+
 ## [1.0.1] — 2026-04-04
 
 ### Fixed

@@ -64,8 +64,9 @@ AI Agent (Claude Desktop / Cursor / Copilot / any MCP client)
 │  └───────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │      CLI Dashboard  (TUI)                             │  │
-│  │  Live Feed · Integrations · MCPs · Agents             │  │
+│  │      Interactive TUI Dashboard  (Ink v6)              │  │
+│  │  Notification Center · Integration Manager ·          │  │
+│  │  MCP Manager · Full keyboard navigation               │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
          │                              │
@@ -170,18 +171,67 @@ Edit your Cursor MCP settings (`~/.cursor/mcp.json` or via Settings → MCP):
 | Command | Description |
 |---|---|
 | `service mcp list` | List all downstream MCP connections |
-| `service mcp add <name> <command> [args...]` | Add a downstream MCP server |
+| `service mcp add [name] [command] [args...]` | Add a downstream MCP server (interactive wizard if no args) |
 | `service mcp remove <id>` | Disconnect and remove a downstream MCP |
 
 ### Utilities
 
 | Command | Description |
 |---|---|
-| `service dashboard` | Open the live TUI dashboard |
+| `service dashboard` | Open the interactive TUI dashboard (full-screen Ink v6 app) |
 | `service completion <shell>` | Generate shell completion script (bash/zsh/fish) |
 | `service update` | Check for and install newer versions from npm |
 | `service --help` | Show help for all commands |
 | `service --version` | Show installed version |
+
+---
+
+## Interactive TUI Dashboard
+
+The `service dashboard` command launches a full-screen, keyboard-driven terminal UI built on **Ink v6** (React for CLI — the same framework powering Claude Code and Gemini CLI). It provides complete management of notifications, integrations, and MCP connections without leaving the terminal.
+
+### Navigation
+
+| Key | Action |
+|---|---|
+| `Tab` | Cycle between panes (Live Feed → Integrations → MCPs → System) |
+| `↑`/`↓` or `j`/`k` | Navigate lists |
+| `Enter` | Open detail view for selected item |
+| `Escape` | Go back to previous screen |
+| `q` | Quit dashboard |
+| `?` | Show/hide keyboard shortcut help overlay |
+| `r` | Refresh current pane |
+
+### Notification Center
+
+Manage all notifications in real-time:
+
+- **Real-time updates**: New notifications appear instantly via SSE push — no polling
+- **Visual indicators**: `●` unread (bold) vs `○` read (dimmed)
+- **Mark as read**: `Space` marks selected notification, `A` marks all as read
+- **Filter**: `u` toggles unread-only view
+- **Search**: `/` opens inline full-text search (FTS5)
+- **Detail view**: `Enter` shows full notification body, source, type, and timestamp
+
+### Integration Manager
+
+View, configure, and manage all integrations:
+
+- **Status badges**: 🟢 active / 🔴 error / ⏸ disabled (color-coded)
+- **Detail view**: Shows config fields with secrets redacted as `••••••`
+- **Enable/Disable**: `e`/`d` keys toggle integration state
+- **Remove**: `x` key with confirmation dialog
+- **Add new**: `a` opens in-TUI multi-step form with type selection, schema-driven fields, and password masking for secret fields
+
+### MCP Connection Manager
+
+Manage all downstream MCP server connections:
+
+- **Status badges**: 🟢 connected / 🔴 error / ⏳ connecting, with tool count display
+- **Detail view**: Full command + args, status, and scrollable tool list
+- **Reconnect**: `r` key triggers reconnect for disconnected MCPs
+- **Remove**: `x` key with confirmation dialog
+- **Add new**: `a` opens in-TUI form for name, command, and args
 
 ---
 

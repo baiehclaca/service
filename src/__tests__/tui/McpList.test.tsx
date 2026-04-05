@@ -266,9 +266,9 @@ describe('McpList', () => {
     await delay(100);
 
     stdin.write('x');
-    await delay(50);
-    stdin.write('y');
     await delay(100);
+    stdin.write('y');
+    await delay(200);
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/mcp-connections/mcp-1'),
