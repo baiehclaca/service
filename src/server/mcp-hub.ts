@@ -4,6 +4,7 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import express, { type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { StdioMcpProxy, type McpToolDefinition } from './proxy.js';
+import { localOnly } from './local-guard.js';
 import { z } from 'zod';
 import type { NotificationStore } from '../gateway/notification-store.js';
 import type { MemoryTools } from '../tools/memory-tools.js';
@@ -131,6 +132,7 @@ export class McpHub {
   /** Create the express app with the MCP endpoint */
   createApp(): express.Express {
     const app = express();
+    app.use(localOnly);
     app.use(express.json());
 
     // Remove NextFunction import - no longer needed for middleware
