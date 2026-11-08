@@ -11,6 +11,7 @@ import { ServiceEventBus } from './gateway/event-bus.js';
 import { PushManager } from './gateway/push-manager.js';
 import { IntegrationRegistry } from './integrations/registry.js';
 import { createAdminRouter } from './api/admin.js';
+import { BIND_HOST } from './server/local-guard.js';
 import { MemoryTools } from './tools/memory-tools.js';
 import { McpManagementTools } from './tools/mcp-management-tools.js';
 import { SearchTools } from './tools/search-tools.js';
@@ -128,8 +129,8 @@ async function main(): Promise<void> {
   const mcpApp = hub.createApp();
 
   // Start MCP Hub HTTP server on port 3333
-  const mcpServer = mcpApp.listen(3333, () => {
-    console.log('[SERVICE] MCP Hub listening on http://localhost:3333/mcp');
+  const mcpServer = mcpApp.listen(3333, BIND_HOST, () => {
+    console.log(`[SERVICE] MCP Hub listening on http://${BIND_HOST}:3333/mcp`);
   });
 
   // Create Admin API on port 3334
@@ -147,8 +148,8 @@ async function main(): Promise<void> {
   });
   adminApp.use(adminRouter);
 
-  const adminServer = adminApp.listen(3334, () => {
-    console.log('[SERVICE] Admin API listening on http://localhost:3334');
+  const adminServer = adminApp.listen(3334, BIND_HOST, () => {
+    console.log(`[SERVICE] Admin API listening on http://${BIND_HOST}:3334`);
   });
 
   // Start built-in echo integration (inactive by default, but registered)

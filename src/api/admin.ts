@@ -9,6 +9,7 @@ import { ServiceEventBus } from '../gateway/event-bus.js';
 import type { NotificationEvent } from '../integrations/types.js';
 import { validateIntegrationConfig } from '../utils/config-validator.js';
 import { formatError } from '../utils/errors.js';
+import { localOnly, redactConfig } from '../server/local-guard.js';
 
 /**
  * Creates the Express router for the admin API on port 3334.
@@ -24,6 +25,11 @@ export function createAdminRouter(deps: {
   startTime: Date;
 }): Router {
   const router = Router();
+  router.use((req, res, next) => {
+    // Inbound webhooks may arrive through a tunnel with a public Host header.
+    if (req.path.startsWith('/webhooks/')) { next(); return; }
+    localOnly(req, res, next);
+  });
   const { store, pushManager, registry, eventBus, hub, startTime } = deps;
 
   // ─── Health & Status ────────────────────────────────
@@ -150,7 +156,7 @@ export function createAdminRouter(deps: {
       res.status(404).json({ error: 'Integration not found' });
       return;
     }
-    const config = store.loadIntegrationConfig(id) ?? {};
+    const config = redactConfig(store.loadIntegrationConfig(id) ?? {});
     res.json({ ...integration, config });
   });
 
